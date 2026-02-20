@@ -1,6 +1,7 @@
 import React, { useRef, useCallback } from 'react';
-import { StyleSheet, TouchableOpacity, Animated } from 'react-native';
+import { StyleSheet, TouchableOpacity, Animated, View } from 'react-native';
 import { Plus } from 'lucide-react-native';
+import { GlassView } from 'expo-glass-effect';
 import Colors from '@/constants/colors';
 
 interface FABProps {
@@ -28,7 +29,9 @@ function FloatingActionButton({ onPress }: FABProps) {
       testID="fab-add-report"
     >
       <Animated.View style={[styles.button, { transform: [{ scale: scaleAnim }] }]}>
-        <Plus size={24} color="#FFFFFF" strokeWidth={2} />
+        <GlassView style={styles.glassInner} glassEffectStyle="regular" tintColor={Colors.accent}>
+          <Plus size={24} color="#FFFFFF" strokeWidth={2} />
+        </GlassView>
       </Animated.View>
     </TouchableOpacity>
   );
@@ -44,16 +47,21 @@ const styles = StyleSheet.create({
     zIndex: 100,
   },
   button: {
-    width: 54,
-    height: 54,
-    borderRadius: 27,
-    backgroundColor: Colors.accent,
-    alignItems: 'center',
-    justifyContent: 'center',
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    overflow: 'hidden',
     shadowColor: Colors.shadow,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
+    shadowOpacity: 0.18,
+    shadowRadius: 10,
     elevation: 6,
+  },
+  glassInner: {
+    flex: 1,
+    borderRadius: 29,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.accent,
   },
 });

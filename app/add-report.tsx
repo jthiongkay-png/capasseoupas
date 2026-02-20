@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MapPin, CheckCircle, XCircle, X, ChevronDown } from 'lucide-react-native';
+import { GlassView } from 'expo-glass-effect';
 import * as Haptics from 'expo-haptics';
 import Colors from '@/constants/colors';
 import { usePlaces } from '@/providers/PlacesProvider';
@@ -272,43 +273,57 @@ export default function AddReportScreen() {
             <Text style={styles.label}>Amex a-t-elle été acceptée ?</Text>
             <View style={styles.acceptRow}>
               <TouchableOpacity
-                style={[
-                  styles.acceptButton,
-                  styles.acceptButtonYes,
-                  accepted === true && styles.acceptButtonYesActive,
-                ]}
+                style={styles.acceptButtonWrap}
                 onPress={() => handleAcceptedPress(true)}
                 activeOpacity={0.7}
               >
-                <CheckCircle size={20} color={accepted === true ? '#FFF' : Colors.accepted} strokeWidth={1.5} />
-                <Text style={[styles.acceptButtonText, accepted === true && styles.acceptButtonTextActive]}>
-                  Oui, acceptée
-                </Text>
+                <GlassView
+                  style={[
+                    styles.acceptButton,
+                    styles.acceptButtonYes,
+                    accepted === true && styles.acceptButtonYesActive,
+                  ]}
+                  glassEffectStyle={accepted === true ? 'regular' : 'clear'}
+                  tintColor={accepted === true ? Colors.accepted : undefined}
+                >
+                  <CheckCircle size={20} color={accepted === true ? '#FFF' : Colors.accepted} strokeWidth={1.5} />
+                  <Text style={[styles.acceptButtonText, accepted === true && styles.acceptButtonTextActive]}>
+                    Oui, acceptée
+                  </Text>
+                </GlassView>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[
-                  styles.acceptButton,
-                  styles.acceptButtonNo,
-                  accepted === false && styles.acceptButtonNoActive,
-                ]}
+                style={styles.acceptButtonWrap}
                 onPress={() => handleAcceptedPress(false)}
                 activeOpacity={0.7}
               >
-                <XCircle size={20} color={accepted === false ? '#FFF' : Colors.refused} strokeWidth={1.5} />
-                <Text style={[styles.acceptButtonText, accepted === false && styles.acceptButtonTextActive]}>
-                  Non, refusée
-                </Text>
+                <GlassView
+                  style={[
+                    styles.acceptButton,
+                    styles.acceptButtonNo,
+                    accepted === false && styles.acceptButtonNoActive,
+                  ]}
+                  glassEffectStyle={accepted === false ? 'regular' : 'clear'}
+                  tintColor={accepted === false ? Colors.refused : undefined}
+                >
+                  <XCircle size={20} color={accepted === false ? '#FFF' : Colors.refused} strokeWidth={1.5} />
+                  <Text style={[styles.acceptButtonText, accepted === false && styles.acceptButtonTextActive]}>
+                    Non, refusée
+                  </Text>
+                </GlassView>
               </TouchableOpacity>
             </View>
           </View>
 
           <TouchableOpacity
-            style={[styles.submitButton, (!name.trim() || !address.trim() || accepted === null) && styles.submitButtonDisabled]}
+            style={[styles.submitButtonWrap, (!name.trim() || !address.trim() || accepted === null) && styles.submitButtonDisabled]}
             onPress={handleSubmit}
             activeOpacity={0.8}
             testID="submit-report"
           >
-            <Text style={styles.submitButtonText}>Envoyer le signalement</Text>
+            <GlassView style={styles.submitButton} glassEffectStyle="regular" tintColor={Colors.accent}>
+              <Text style={styles.submitButtonText}>Envoyer le signalement</Text>
+            </GlassView>
           </TouchableOpacity>
 
           <View style={{ height: 40 }} />
@@ -446,8 +461,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 12,
   },
-  acceptButton: {
+  acceptButtonWrap: {
     flex: 1,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  acceptButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -480,13 +499,17 @@ const styles = StyleSheet.create({
   acceptButtonTextActive: {
     color: '#FFFFFF',
   },
+  submitButtonWrap: {
+    borderRadius: 12,
+    overflow: 'hidden',
+    marginTop: 8,
+  },
   submitButton: {
     backgroundColor: Colors.accent,
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 8,
   },
   submitButtonDisabled: {
     opacity: 0.4,

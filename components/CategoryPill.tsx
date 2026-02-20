@@ -1,5 +1,6 @@
 import React, { useRef, useCallback } from 'react';
-import { Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
+import { Text, StyleSheet, TouchableOpacity, Animated, View } from 'react-native';
+import { GlassView } from 'expo-glass-effect';
 import Colors from '@/constants/colors';
 
 interface CategoryPillProps {
@@ -28,12 +29,20 @@ function CategoryPillComponent({ label, selected, onPress }: CategoryPillProps) 
     >
       <Animated.View
         style={[
-          styles.pill,
-          selected && styles.pillSelected,
+          styles.pillOuter,
           { transform: [{ scale: scaleAnim }] },
         ]}
       >
-        <Text style={[styles.pillText, selected && styles.pillTextSelected]}>{label}</Text>
+        <GlassView
+          style={[
+            styles.pill,
+            selected && styles.pillSelected,
+          ]}
+          glassEffectStyle={selected ? 'regular' : 'clear'}
+          tintColor={selected ? Colors.primary : undefined}
+        >
+          <Text style={[styles.pillText, selected && styles.pillTextSelected]}>{label}</Text>
+        </GlassView>
       </Animated.View>
     </TouchableOpacity>
   );
@@ -42,14 +51,18 @@ function CategoryPillComponent({ label, selected, onPress }: CategoryPillProps) 
 export default React.memo(CategoryPillComponent);
 
 const styles = StyleSheet.create({
+  pillOuter: {
+    borderRadius: 20,
+    overflow: 'hidden',
+    marginRight: 8,
+  },
   pill: {
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: Colors.background,
+    backgroundColor: Colors.searchBg,
     borderWidth: 1,
     borderColor: Colors.border,
-    marginRight: 8,
   },
   pillSelected: {
     backgroundColor: Colors.primary,
