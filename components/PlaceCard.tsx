@@ -1,6 +1,6 @@
 import React, { useRef, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
-import { MapPin, CheckCircle, XCircle, ChevronRight, UtensilsCrossed, Coffee, Wine, ShoppingBag, Hotel, Fuel, Apple, Ticket, Heart, Car } from 'lucide-react-native';
+import { MapPin, CheckCircle, XCircle, ChevronRight, UtensilsCrossed, Coffee, Wine, ShoppingBag, Hotel, Fuel, Apple, Ticket, Heart, Car, Navigation } from 'lucide-react-native';
 import { Place, PlaceCategory, CATEGORY_LABELS } from '@/types';
 import Colors from '@/constants/colors';
 
@@ -22,9 +22,10 @@ interface PlaceCardProps {
   place: Place;
   onPress: (place: Place) => void;
   compact?: boolean;
+  distance?: string;
 }
 
-function PlaceCardComponent({ place, onPress, compact = false }: PlaceCardProps) {
+function PlaceCardComponent({ place, onPress, compact = false, distance }: PlaceCardProps) {
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const totalReports = place.reportsAccepted + place.reportsRefused;
   const acceptRate = totalReports > 0 ? Math.round((place.reportsAccepted / totalReports) * 100) : 0;
@@ -106,6 +107,12 @@ function PlaceCardComponent({ place, onPress, compact = false }: PlaceCardProps)
         <View style={styles.addressRow}>
           <MapPin size={13} color={Colors.textTertiary} strokeWidth={1.5} />
           <Text style={styles.address} numberOfLines={1}>{place.address}</Text>
+          {distance ? (
+            <View style={styles.distanceBadge}>
+              <Navigation size={10} color={Colors.primary} strokeWidth={2} />
+              <Text style={styles.distanceText}>{distance}</Text>
+            </View>
+          ) : null}
         </View>
 
         <View style={styles.cardFooter}>
@@ -267,5 +274,20 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  distanceBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: '#EBF2FF',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 10,
+    marginLeft: 6,
+  },
+  distanceText: {
+    fontSize: 11,
+    fontWeight: '600' as const,
+    color: Colors.primary,
   },
 });

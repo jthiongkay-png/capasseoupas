@@ -6,6 +6,7 @@ import { Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { PlacesProvider } from '@/providers/PlacesProvider';
 import { UserProvider } from '@/providers/UserProvider';
+import { LocationProvider } from '@/providers/LocationProvider';
 import Colors from '@/constants/colors';
 
 SplashScreen.preventAutoHideAsync();
@@ -63,11 +64,13 @@ export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
       <GestureHandlerRootView style={{ flex: 1 }}>
-        <PlacesProvider>
-          <UserProvider>
-            <RootLayoutNav />
-          </UserProvider>
-        </PlacesProvider>
+        <LocationProvider>
+          <PlacesProvider>
+            <UserProvider>
+              <RootLayoutNav />
+            </UserProvider>
+          </PlacesProvider>
+        </LocationProvider>
       </GestureHandlerRootView>
     </QueryClientProvider>
   );

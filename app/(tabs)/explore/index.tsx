@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, FlatList, TextInput, ScrollView, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -9,6 +9,7 @@ import { Place, PlaceCategory, CATEGORY_LABELS } from '@/types';
 import PlaceCard from '@/components/PlaceCard';
 import CategoryPill from '@/components/CategoryPill';
 import FloatingActionButton from '@/components/FloatingActionButton';
+import { useLocation } from '@/providers/LocationProvider';
 
 const CATEGORIES: { key: PlaceCategory | 'all'; label: string }[] = [
   { key: 'all', label: 'Tous' },
@@ -32,6 +33,21 @@ export default function ExploreScreen() {
   const [statusFilter, setStatusFilter] = useState<'all' | 'accepted' | 'refused'>('all');
 
   const places = useFilteredPlaces(search, selectedCategory, statusFilter);
+  const { getDistanceFromUser, formatDistance, userLocation } = useLocation();
+
+  const placesWithDistance = useMemo(() => {
+    return places
+      .map((p) => ({
+        place: p,
+        distance: getDistanceFromUser(p.latitude, p.longitude),
+      }))
+      .sort((a, b) => {
+        if (a.distance === null && b.distance === null) return 0;
+        if (a.distance === null) return 1;
+        if (b.distance === null) return -1;
+        return a.distance - b.distance;
+      });
+  }, [places, getDistanceFromUser]);
 
   const handlePlacePress = useCallback((place: Place) => {
     router.push(`/place/${place.id}` as any);
@@ -49,17 +65,17 @@ export default function ExploreScreen() {
     }
   }, []);
 
-  const renderPlace = useCallback(({ item }: { item: Place }) => (
-    <PlaceCard place={item} onPress={handlePlacePress} />
-  ), [handlePlacePress]);
+  const renderPlace = useCallback(({ item }: { item: { place: Place; distance: number | null } }) => (
+    <PlaceCard place={item.place} onPress={handlePlacePress} distance={formatDistance(item.distance)} />
+  ), [handlePlacePress, formatDistance]);
 
-  const keyExtractor = useCallback((item: Place) => item.id, []);
+  const keyExtractor = useCallback((item: { place: Place; distance: number | null }) => item.place.id, []);
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <Text style={styles.title}>Explorer</Text>
-        <Text style={styles.subtitle}>{places.length} lieux trouvés</Text>
+        <Text style={styles.subtitle}>{placesWithDistance.length} lieux trouvés{userLocation ? ' · triés par distance' : ''}</Text>
       </View>
 
       <View style={styles.searchContainer}>
@@ -104,7 +120,7 @@ export default function ExploreScreen() {
       </ScrollView>
 
       <FlatList
-        data={places}
+        data={placesWithDistance}
         renderItem={renderPlace}
         keyExtractor={keyExtractor}
         showsVerticalScrollIndicator={false}

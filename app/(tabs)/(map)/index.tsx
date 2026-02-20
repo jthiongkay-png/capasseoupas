@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useMemo } from 'react';
+import React, { useState, useCallback, useRef, useMemo, useEffect } from 'react';
 import { View, Text, StyleSheet, Platform, TouchableOpacity, Animated, Dimensions, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -8,6 +8,7 @@ import { usePlaces } from '@/providers/PlacesProvider';
 import { Place, PlaceCategory, CATEGORY_LABELS } from '@/types';
 import FloatingActionButton from '@/components/FloatingActionButton';
 import PlaceCard from '@/components/PlaceCard';
+import { useLocation } from '@/providers/LocationProvider';
 
 let NativeMapView: any = null;
 let NativeMarker: any = null;
@@ -45,7 +46,7 @@ interface Region {
   longitudeDelta: number;
 }
 
-const PARIS_REGION: Region = {
+const DEFAULT_REGION: Region = {
   latitude: 48.8606,
   longitude: 2.3476,
   latitudeDelta: 0.04,
@@ -56,6 +57,36 @@ export default function MapScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { places } = usePlaces();
+  const { userLocation, isLoading: locationLoading, requestLocation } = useLocation();
+
+  const initialRegion = useMemo<Region>(() => {
+    if (userLocation) {
+      return {
+        latitude: userLocation.latitude,
+        longitude: userLocation.longitude,
+        latitudeDelta: 0.04,
+        longitudeDelta: 0.04,
+      };
+    }
+    return DEFAULT_REGION;
+  }, [userLocation]);
+
+  const hasAnimatedToUser = useRef(false);
+
+  useEffect(() => {
+    if (userLocation && mapRef.current && !hasAnimatedToUser.current) {
+      hasAnimatedToUser.current = true;
+      mapRef.current.animateToRegion(
+        {
+          latitude: userLocation.latitude,
+          longitude: userLocation.longitude,
+          latitudeDelta: 0.04,
+          longitudeDelta: 0.04,
+        },
+        600
+      );
+    }
+  }, [userLocation]);
   const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
   const [filter, setFilter] = useState<'all' | 'accepted' | 'refused'>('all');
   const [selectedCategory, setSelectedCategory] = useState<PlaceCategory | null>(null);
@@ -102,8 +133,21 @@ export default function MapScreen() {
   }, [router]);
 
   const handleCenterMap = useCallback(() => {
-    mapRef.current?.animateToRegion(PARIS_REGION, 500);
-  }, []);
+    if (userLocation) {
+      mapRef.current?.animateToRegion(
+        {
+          latitude: userLocation.latitude,
+          longitude: userLocation.longitude,
+          latitudeDelta: 0.02,
+          longitudeDelta: 0.02,
+        },
+        500
+      );
+    } else {
+      requestLocation();
+      mapRef.current?.animateToRegion(DEFAULT_REGION, 500);
+    }
+  }, [userLocation, requestLocation]);
 
   const acceptedCount = useMemo(() => places.filter((p) => p.accepted).length, [places]);
   const refusedCount = useMemo(() => places.filter((p) => !p.accepted).length, [places]);
@@ -215,7 +259,7 @@ export default function MapScreen() {
         <NativeMapView
           ref={mapRef}
           style={styles.map}
-          initialRegion={PARIS_REGION}
+          initialRegion={initialRegion}
           onPress={handleMapPress}
           showsUserLocation
           showsMyLocationButton={false}
