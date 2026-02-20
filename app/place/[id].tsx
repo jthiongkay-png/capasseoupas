@@ -3,7 +3,6 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Animated } from '
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowLeft, CheckCircle, XCircle, MapPin, Clock, Users, TrendingUp, ThumbsUp, ThumbsDown } from 'lucide-react-native';
-import { GlassView } from 'expo-glass-effect';
 import * as Haptics from 'expo-haptics';
 import Colors from '@/constants/colors';
 import { usePlaces } from '@/providers/PlacesProvider';
@@ -62,11 +61,7 @@ export default function PlaceDetailScreen() {
           </View>
 
           <View style={styles.statusBanner}>
-            <GlassView
-              style={[styles.statusPill, { backgroundColor: place.accepted ? Colors.acceptedLight : Colors.refusedLight }]}
-              glassEffectStyle="clear"
-              tintColor={place.accepted ? Colors.accepted : Colors.refused}
-            >
+            <View style={[styles.statusPill, { backgroundColor: place.accepted ? Colors.acceptedLight : Colors.refusedLight }]}>
               {place.accepted ? (
                 <CheckCircle size={16} color={Colors.accepted} strokeWidth={1.5} />
               ) : (
@@ -75,7 +70,7 @@ export default function PlaceDetailScreen() {
               <Text style={[styles.statusPillText, { color: place.accepted ? Colors.accepted : Colors.refused }]}>
                 {place.accepted ? 'Amex acceptée' : 'Amex refusée'}
               </Text>
-            </GlassView>
+            </View>
           </View>
 
           <Text style={styles.heroName}>{place.name}</Text>
@@ -165,20 +160,20 @@ export default function PlaceDetailScreen() {
                 onPress={() => handleReport(true)}
                 activeOpacity={0.8}
               >
-                <GlassView style={styles.contributeButtonAccepted} glassEffectStyle="regular" tintColor={Colors.accepted}>
+                <View style={styles.contributeButtonAccepted}>
                   <ThumbsUp size={18} color="#FFF" strokeWidth={1.5} />
                   <Text style={styles.contributeButtonText}>Oui, acceptée</Text>
-                </GlassView>
+                </View>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.contributeButtonWrap}
                 onPress={() => handleReport(false)}
                 activeOpacity={0.8}
               >
-                <GlassView style={styles.contributeButtonRefused} glassEffectStyle="regular" tintColor={Colors.refused}>
+                <View style={styles.contributeButtonRefused}>
                   <ThumbsDown size={18} color="#FFF" strokeWidth={1.5} />
                   <Text style={styles.contributeButtonText}>Non, refusée</Text>
-                </GlassView>
+                </View>
               </TouchableOpacity>
             </View>
           </View>

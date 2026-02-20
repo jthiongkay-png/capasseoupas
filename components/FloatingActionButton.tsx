@@ -1,7 +1,6 @@
 import React, { useRef, useCallback } from 'react';
 import { StyleSheet, TouchableOpacity, Animated, View } from 'react-native';
 import { Plus } from 'lucide-react-native';
-import { GlassView } from 'expo-glass-effect';
 import Colors from '@/constants/colors';
 
 interface FABProps {
@@ -29,9 +28,9 @@ function FloatingActionButton({ onPress }: FABProps) {
       testID="fab-add-report"
     >
       <Animated.View style={[styles.button, { transform: [{ scale: scaleAnim }] }]}>
-        <GlassView style={styles.glassInner} glassEffectStyle="regular" tintColor={Colors.accent}>
+        <View style={styles.glassInner}>
           <Plus size={24} color="#FFFFFF" strokeWidth={2} />
-        </GlassView>
+        </View>
       </Animated.View>
     </TouchableOpacity>
   );

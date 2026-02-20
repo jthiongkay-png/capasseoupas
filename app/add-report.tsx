@@ -4,7 +4,6 @@ import { useRouter } from 'expo-router';
 import { Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MapPin, CheckCircle, XCircle, X, ChevronDown } from 'lucide-react-native';
-import { GlassView } from 'expo-glass-effect';
 import * as Haptics from 'expo-haptics';
 import Colors from '@/constants/colors';
 import { usePlaces } from '@/providers/PlacesProvider';
@@ -277,40 +276,36 @@ export default function AddReportScreen() {
                 onPress={() => handleAcceptedPress(true)}
                 activeOpacity={0.7}
               >
-                <GlassView
+                <View
                   style={[
                     styles.acceptButton,
                     styles.acceptButtonYes,
                     accepted === true && styles.acceptButtonYesActive,
                   ]}
-                  glassEffectStyle={accepted === true ? 'regular' : 'clear'}
-                  tintColor={accepted === true ? Colors.accepted : undefined}
                 >
                   <CheckCircle size={20} color={accepted === true ? '#FFF' : Colors.accepted} strokeWidth={1.5} />
                   <Text style={[styles.acceptButtonText, accepted === true && styles.acceptButtonTextActive]}>
                     Oui, acceptée
                   </Text>
-                </GlassView>
+                </View>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.acceptButtonWrap}
                 onPress={() => handleAcceptedPress(false)}
                 activeOpacity={0.7}
               >
-                <GlassView
+                <View
                   style={[
                     styles.acceptButton,
                     styles.acceptButtonNo,
                     accepted === false && styles.acceptButtonNoActive,
                   ]}
-                  glassEffectStyle={accepted === false ? 'regular' : 'clear'}
-                  tintColor={accepted === false ? Colors.refused : undefined}
                 >
                   <XCircle size={20} color={accepted === false ? '#FFF' : Colors.refused} strokeWidth={1.5} />
                   <Text style={[styles.acceptButtonText, accepted === false && styles.acceptButtonTextActive]}>
                     Non, refusée
                   </Text>
-                </GlassView>
+                </View>
               </TouchableOpacity>
             </View>
           </View>
@@ -321,9 +316,9 @@ export default function AddReportScreen() {
             activeOpacity={0.8}
             testID="submit-report"
           >
-            <GlassView style={styles.submitButton} glassEffectStyle="regular" tintColor={Colors.accent}>
+            <View style={styles.submitButton}>
               <Text style={styles.submitButtonText}>Envoyer le signalement</Text>
-            </GlassView>
+            </View>
           </TouchableOpacity>
 
           <View style={{ height: 40 }} />

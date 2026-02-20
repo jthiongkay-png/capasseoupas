@@ -1,6 +1,5 @@
 import React, { useRef, useCallback } from 'react';
 import { Text, StyleSheet, TouchableOpacity, Animated, View } from 'react-native';
-import { GlassView } from 'expo-glass-effect';
 import Colors from '@/constants/colors';
 
 interface CategoryPillProps {
@@ -33,16 +32,14 @@ function CategoryPillComponent({ label, selected, onPress }: CategoryPillProps) 
           { transform: [{ scale: scaleAnim }] },
         ]}
       >
-        <GlassView
+        <View
           style={[
             styles.pill,
             selected && styles.pillSelected,
           ]}
-          glassEffectStyle={selected ? 'regular' : 'clear'}
-          tintColor={selected ? Colors.primary : undefined}
         >
           <Text style={[styles.pillText, selected && styles.pillTextSelected]}>{label}</Text>
-        </GlassView>
+        </View>
       </Animated.View>
     </TouchableOpacity>
   );

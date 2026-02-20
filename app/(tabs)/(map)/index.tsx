@@ -3,7 +3,6 @@ import { View, Text, StyleSheet, Platform, TouchableOpacity, Animated, Dimension
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CheckCircle, XCircle, Locate, Layers, MapPin, UtensilsCrossed, Coffee, Wine, ShoppingBag, Hotel, Fuel, ShoppingCart, Gamepad2, Heart, Bus, MoreHorizontal } from 'lucide-react-native';
-import { GlassView } from 'expo-glass-effect';
 import Colors from '@/constants/colors';
 import { usePlaces } from '@/providers/PlacesProvider';
 import { Place, PlaceCategory, CATEGORY_LABELS } from '@/types';
@@ -152,47 +151,35 @@ export default function MapScreen() {
         onPress={() => setFilter('all')}
         activeOpacity={0.7}
       >
-        <GlassView
-          style={[styles.filterChip, filter === 'all' && styles.filterChipActive]}
-          glassEffectStyle={filter === 'all' ? 'regular' : 'clear'}
-          tintColor={filter === 'all' ? Colors.primary : undefined}
-        >
+        <View style={[styles.filterChip, filter === 'all' && styles.filterChipActive]}>
           <Text style={[styles.filterChipText, filter === 'all' && styles.filterChipTextActive]}>
             Tous ({places.length})
           </Text>
-        </GlassView>
+        </View>
       </TouchableOpacity>
       <TouchableOpacity
         style={styles.filterChipWrap}
         onPress={() => setFilter('accepted')}
         activeOpacity={0.7}
       >
-        <GlassView
-          style={[styles.filterChip, filter === 'accepted' && styles.filterChipAccepted]}
-          glassEffectStyle={filter === 'accepted' ? 'regular' : 'clear'}
-          tintColor={filter === 'accepted' ? Colors.accepted : undefined}
-        >
+        <View style={[styles.filterChip, filter === 'accepted' && styles.filterChipAccepted]}>
           <View style={[styles.filterDot, { backgroundColor: Colors.accepted }]} />
           <Text style={[styles.filterChipText, filter === 'accepted' && styles.filterChipTextActive]}>
             Accepté ({acceptedCount})
           </Text>
-        </GlassView>
+        </View>
       </TouchableOpacity>
       <TouchableOpacity
         style={styles.filterChipWrap}
         onPress={() => setFilter('refused')}
         activeOpacity={0.7}
       >
-        <GlassView
-          style={[styles.filterChip, filter === 'refused' && styles.filterChipRefused]}
-          glassEffectStyle={filter === 'refused' ? 'regular' : 'clear'}
-          tintColor={filter === 'refused' ? Colors.refused : undefined}
-        >
+        <View style={[styles.filterChip, filter === 'refused' && styles.filterChipRefused]}>
           <View style={[styles.filterDot, { backgroundColor: Colors.refused }]} />
           <Text style={[styles.filterChipText, filter === 'refused' && styles.filterChipTextActive]}>
             Refusé ({refusedCount})
           </Text>
-        </GlassView>
+        </View>
       </TouchableOpacity>
     </View>
   );
@@ -252,9 +239,9 @@ export default function MapScreen() {
       </View>
 
       <TouchableOpacity style={[styles.centerButtonWrap, { bottom: selectedPlace ? 280 : 140 }]} onPress={handleCenterMap} activeOpacity={0.8}>
-        <GlassView style={styles.centerButton} glassEffectStyle="regular">
+        <View style={styles.centerButton}>
           <Locate size={20} color={Colors.primary} strokeWidth={1.5} />
-        </GlassView>
+        </View>
       </TouchableOpacity>
 
       {selectedPlace && (
