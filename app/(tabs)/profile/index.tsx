@@ -1,9 +1,9 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Linking, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Info, FileText, Shield, Mail, ChevronRight, CreditCard, Users, Star, Heart } from 'lucide-react-native';
-import Colors from '@/constants/colors';
+import { useThemeColors, ThemeColors } from '@/constants/colors';
 import { usePlaces } from '@/providers/PlacesProvider';
 
 const APP_VERSION = '1.0.0';
@@ -14,9 +14,11 @@ interface SettingsRowProps {
   sublabel?: string;
   onPress?: () => void;
   rightElement?: React.ReactNode;
+  colors: ThemeColors;
 }
 
-function SettingsRow({ icon, label, sublabel, onPress, rightElement }: SettingsRowProps) {
+function SettingsRow({ icon, label, sublabel, onPress, rightElement, colors }: SettingsRowProps) {
+  const styles = useMemo(() => createStyles(colors), [colors]);
   return (
     <TouchableOpacity
       style={styles.settingsRow}
@@ -31,7 +33,7 @@ function SettingsRow({ icon, label, sublabel, onPress, rightElement }: SettingsR
           {sublabel && <Text style={styles.settingsRowSublabel}>{sublabel}</Text>}
         </View>
       </View>
-      {rightElement ?? (onPress ? <ChevronRight size={18} color={Colors.textTertiary} strokeWidth={1.5} /> : null)}
+      {rightElement ?? (onPress ? <ChevronRight size={18} color={colors.textTertiary} strokeWidth={1.5} /> : null)}
     </TouchableOpacity>
   );
 }
@@ -40,19 +42,21 @@ export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { places } = usePlaces();
+  const colors = useThemeColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const acceptedCount = places.filter((p) => p.accepted).length;
   const refusedCount = places.filter((p) => !p.accepted).length;
 
   const handleContact = useCallback(() => {
-    Linking.openURL('mailto:contact@jamex.app');
+    Linking.openURL('mailto:contact@capasseoupas.app');
   }, []);
 
   const handleRate = useCallback(() => {
     if (Platform.OS === 'web') return;
     const storeUrl = Platform.OS === 'ios'
-      ? 'https://apps.apple.com/app/jamex'
-      : 'https://play.google.com/store/apps/details?id=com.jamex';
+      ? 'https://apps.apple.com/app/capasseoupas'
+      : 'https://play.google.com/store/apps/details?id=com.capasseoupas';
     Linking.openURL(storeUrl);
   }, []);
 
@@ -73,33 +77,36 @@ export default function SettingsScreen() {
         </View>
         <View style={styles.statDivider} />
         <View style={styles.statItem}>
-          <Text style={[styles.statValue, { color: Colors.accepted }]}>{acceptedCount}</Text>
+          <Text style={[styles.statValue, { color: colors.accepted }]}>{acceptedCount}</Text>
           <Text style={styles.statLabel}>Acceptés</Text>
         </View>
         <View style={styles.statDivider} />
         <View style={styles.statItem}>
-          <Text style={[styles.statValue, { color: Colors.refused }]}>{refusedCount}</Text>
+          <Text style={[styles.statValue, { color: colors.refused }]}>{refusedCount}</Text>
           <Text style={styles.statLabel}>Refusés</Text>
         </View>
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>À propos de Jamex</Text>
+        <Text style={styles.sectionTitle}>À propos de Capasseoupas</Text>
         <View style={styles.card}>
           <SettingsRow
-            icon={<CreditCard size={18} color={Colors.primary} strokeWidth={1.5} />}
-            label="Qu'est-ce que Jamex ?"
+            colors={colors}
+            icon={<CreditCard size={18} color={colors.primary} strokeWidth={1.5} />}
+            label="Qu'est-ce que Capasseoupas ?"
             sublabel="Carte communautaire des lieux acceptant Amex"
           />
           <View style={styles.rowDivider} />
           <SettingsRow
-            icon={<Users size={18} color={Colors.textSecondary} strokeWidth={1.5} />}
+            colors={colors}
+            icon={<Users size={18} color={colors.textSecondary} strokeWidth={1.5} />}
             label="Alimenté par la communauté"
             sublabel="Chaque signalement aide les porteurs Amex"
           />
           <View style={styles.rowDivider} />
           <SettingsRow
-            icon={<Info size={18} color={Colors.textSecondary} strokeWidth={1.5} />}
+            colors={colors}
+            icon={<Info size={18} color={colors.textSecondary} strokeWidth={1.5} />}
             label="Version"
             rightElement={<Text style={styles.versionText}>{APP_VERSION}</Text>}
           />
@@ -145,14 +152,16 @@ export default function SettingsScreen() {
         <Text style={styles.sectionTitle}>Informations légales</Text>
         <View style={styles.card}>
           <SettingsRow
-            icon={<FileText size={18} color={Colors.textSecondary} strokeWidth={1.5} />}
+            colors={colors}
+            icon={<FileText size={18} color={colors.textSecondary} strokeWidth={1.5} />}
             label="Conditions d'utilisation"
             sublabel="Règles d'utilisation de l'application"
             onPress={() => router.push('/terms' as never)}
           />
           <View style={styles.rowDivider} />
           <SettingsRow
-            icon={<Shield size={18} color={Colors.textSecondary} strokeWidth={1.5} />}
+            colors={colors}
+            icon={<Shield size={18} color={colors.textSecondary} strokeWidth={1.5} />}
             label="Politique de confidentialité"
             sublabel="Comment nous protégeons vos données"
             onPress={() => router.push('/privacy' as never)}
@@ -164,16 +173,18 @@ export default function SettingsScreen() {
         <Text style={styles.sectionTitle}>Support</Text>
         <View style={styles.card}>
           <SettingsRow
-            icon={<Mail size={18} color={Colors.textSecondary} strokeWidth={1.5} />}
+            colors={colors}
+            icon={<Mail size={18} color={colors.textSecondary} strokeWidth={1.5} />}
             label="Nous contacter"
-            sublabel="contact@jamex.app"
+            sublabel="contact@capasseoupas.app"
             onPress={handleContact}
           />
           {Platform.OS !== 'web' && (
             <>
               <View style={styles.rowDivider} />
               <SettingsRow
-                icon={<Star size={18} color={Colors.warning} strokeWidth={1.5} />}
+                colors={colors}
+                icon={<Star size={18} color={colors.warning} strokeWidth={1.5} />}
                 label="Noter l'application"
                 sublabel="Votre avis compte !"
                 onPress={handleRate}
@@ -185,14 +196,14 @@ export default function SettingsScreen() {
 
       <View style={styles.footer}>
         <View style={styles.footerLogo}>
-          <Text style={styles.footerLogoLight}>Ja</Text>
-          <Text style={styles.footerLogoBold}>mex</Text>
+          <Text style={styles.footerLogoAccent}>C</Text>
+          <Text style={styles.footerLogoBold}>apasseoupas</Text>
         </View>
         <Text style={styles.footerText}>
-          Fait avec <Heart size={10} color={Colors.refused} /> pour la communauté Amex en France
+          Fait avec <Heart size={10} color={colors.refused} /> pour la communauté Amex en France
         </Text>
         <Text style={styles.footerDisclaimer}>
-          Jamex n'est pas affilié à American Express.{'\n'}Toutes les données proviennent de la communauté.
+          Capasseoupas n'est pas affilié à American Express.{'\n'}Toutes les données proviennent de la communauté.
         </Text>
       </View>
 
@@ -201,10 +212,10 @@ export default function SettingsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
   contentContainer: {
     paddingBottom: 20,
@@ -217,19 +228,19 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 26,
     fontWeight: '700' as const,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     letterSpacing: -0.5,
   },
   statsBar: {
     flexDirection: 'row',
     marginHorizontal: 20,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.surface,
     borderRadius: 16,
     paddingVertical: 18,
     paddingHorizontal: 8,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   statItem: {
     flex: 1,
@@ -238,17 +249,17 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 22,
     fontWeight: '700' as const,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   statLabel: {
     fontSize: 11,
     fontWeight: '400' as const,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginTop: 2,
   },
   statDivider: {
     width: 1,
-    backgroundColor: Colors.border,
+    backgroundColor: colors.border,
     marginVertical: 4,
   },
   section: {
@@ -258,18 +269,18 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 12,
     fontWeight: '600' as const,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     textTransform: 'uppercase' as const,
     letterSpacing: 0.8,
     marginBottom: 10,
     paddingLeft: 4,
   },
   card: {
-    backgroundColor: Colors.background,
+    backgroundColor: colors.surface,
     borderRadius: 16,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   settingsRow: {
     flexDirection: 'row',
@@ -288,7 +299,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 10,
-    backgroundColor: Colors.searchBg,
+    backgroundColor: colors.searchBg,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -298,23 +309,23 @@ const styles = StyleSheet.create({
   settingsRowLabel: {
     fontSize: 15,
     fontWeight: '500' as const,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   settingsRowSublabel: {
     fontSize: 12,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginTop: 1,
     fontWeight: '400' as const,
   },
   rowDivider: {
     height: 1,
-    backgroundColor: Colors.border,
+    backgroundColor: colors.border,
     marginLeft: 64,
   },
   versionText: {
     fontSize: 14,
     fontWeight: '400' as const,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   howItWorksStep: {
     flexDirection: 'row',
@@ -329,14 +340,14 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Colors.searchBg,
+    backgroundColor: colors.searchBg,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   stepNumber: {
     fontSize: 15,
     fontWeight: '600' as const,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   stepContent: {
     flex: 1,
@@ -344,17 +355,17 @@ const styles = StyleSheet.create({
   stepTitle: {
     fontSize: 15,
     fontWeight: '500' as const,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   stepDesc: {
     fontSize: 12,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginTop: 2,
     fontWeight: '400' as const,
   },
   stepDivider: {
     height: 1,
-    backgroundColor: Colors.border,
+    backgroundColor: colors.border,
     marginLeft: 64,
   },
   footer: {
@@ -367,27 +378,27 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     marginBottom: 4,
   },
-  footerLogoLight: {
+  footerLogoAccent: {
     fontSize: 18,
-    fontWeight: '300' as const,
-    color: Colors.textSecondary,
+    fontWeight: '800' as const,
+    color: '#006FCF',
     letterSpacing: -0.5,
   },
   footerLogoBold: {
     fontSize: 18,
     fontWeight: '700' as const,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     letterSpacing: -0.5,
   },
   footerText: {
     fontSize: 12,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     flexDirection: 'row',
     alignItems: 'center',
   },
   footerDisclaimer: {
     fontSize: 11,
-    color: Colors.textTertiary,
+    color: colors.textTertiary,
     textAlign: 'center',
     lineHeight: 16,
     marginTop: 4,

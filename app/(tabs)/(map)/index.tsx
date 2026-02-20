@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Platform, TouchableOpacity, Animated, Dimension
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CheckCircle, XCircle, Locate, Layers, MapPin, UtensilsCrossed, Coffee, Wine, ShoppingBag, Hotel, Fuel, ShoppingCart, Gamepad2, Heart, Bus, MoreHorizontal } from 'lucide-react-native';
-import Colors from '@/constants/colors';
+import { useThemeColors, ThemeColors } from '@/constants/colors';
 import { usePlaces } from '@/providers/PlacesProvider';
 import { Place, PlaceCategory, CATEGORY_LABELS } from '@/types';
 import FloatingActionButton from '@/components/FloatingActionButton';
@@ -58,6 +58,8 @@ export default function MapScreen() {
   const router = useRouter();
   const { places } = usePlaces();
   const { userLocation, isLoading: locationLoading, requestLocation } = useLocation();
+  const colors = useThemeColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const initialRegion = useMemo<Region>(() => {
     if (userLocation) {
@@ -169,7 +171,7 @@ export default function MapScreen() {
             activeOpacity={0.7}
           >
             <View style={[styles.categoryIconWrap, isSelected && styles.categoryIconWrapActive]}>
-              <Icon size={20} color={isSelected ? Colors.primary : Colors.textSecondary} strokeWidth={isSelected ? 2 : 1.5} />
+              <Icon size={20} color={isSelected ? colors.primary : colors.textSecondary} strokeWidth={isSelected ? 2 : 1.5} />
             </View>
             <Text style={[styles.categoryLabel, isSelected && styles.categoryLabelActive]}>
               {CATEGORY_LABELS[cat]}
@@ -183,8 +185,8 @@ export default function MapScreen() {
 
   const renderAppTitle = () => (
     <View style={styles.appTitleRow}>
-      <Text style={styles.appTitleJ}>J</Text>
-      <Text style={styles.appTitleAmex}>amex</Text>
+      <Text style={styles.appTitleC}>C</Text>
+      <Text style={styles.appTitleRest}>apasseoupas</Text>
     </View>
   );
 
@@ -207,7 +209,7 @@ export default function MapScreen() {
         activeOpacity={0.7}
       >
         <View style={[styles.filterChip, filter === 'accepted' && styles.filterChipAccepted]}>
-          <View style={[styles.filterDot, { backgroundColor: Colors.accepted }]} />
+          <View style={[styles.filterDot, { backgroundColor: colors.accepted }]} />
           <Text style={[styles.filterChipText, filter === 'accepted' && styles.filterChipTextActive]}>
             Accepté ({acceptedCount})
           </Text>
@@ -219,7 +221,7 @@ export default function MapScreen() {
         activeOpacity={0.7}
       >
         <View style={[styles.filterChip, filter === 'refused' && styles.filterChipRefused]}>
-          <View style={[styles.filterDot, { backgroundColor: Colors.refused }]} />
+          <View style={[styles.filterDot, { backgroundColor: colors.refused }]} />
           <Text style={[styles.filterChipText, filter === 'refused' && styles.filterChipTextActive]}>
             Refusé ({refusedCount})
           </Text>
@@ -238,7 +240,7 @@ export default function MapScreen() {
         </View>
         <ScrollView style={styles.webList} contentContainerStyle={styles.webListContent}>
           <View style={styles.webMapNotice}>
-            <MapPin size={18} color={Colors.textSecondary} strokeWidth={1.5} />
+            <MapPin size={18} color={colors.textSecondary} strokeWidth={1.5} />
             <Text style={styles.webMapNoticeText}>La carte est disponible sur l'application mobile</Text>
           </View>
           {filteredPlaces.map((place) => (
@@ -269,7 +271,7 @@ export default function MapScreen() {
               key={place.id}
               coordinate={{ latitude: place.latitude, longitude: place.longitude }}
               onPress={() => handleMarkerPress(place)}
-              pinColor={place.accepted ? Colors.accepted : Colors.refused}
+              pinColor={place.accepted ? colors.accepted : colors.refused}
               title={place.name}
             />
           ))}
@@ -284,7 +286,7 @@ export default function MapScreen() {
 
       <TouchableOpacity style={[styles.centerButtonWrap, { bottom: selectedPlace ? 280 : 140 }]} onPress={handleCenterMap} activeOpacity={0.8}>
         <View style={styles.centerButton}>
-          <Locate size={20} color={Colors.primary} strokeWidth={1.5} />
+          <Locate size={20} color={colors.primary} strokeWidth={1.5} />
         </View>
       </TouchableOpacity>
 
@@ -299,10 +301,10 @@ export default function MapScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
   map: {
     flex: 1,
@@ -314,24 +316,24 @@ const styles = StyleSheet.create({
     right: 0,
     paddingHorizontal: 20,
     paddingBottom: 4,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    borderBottomColor: colors.border,
   },
   appTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 8,
   },
-  appTitleJ: {
+  appTitleC: {
     fontSize: 26,
     fontWeight: '800' as const,
     color: '#006FCF',
   },
-  appTitleAmex: {
+  appTitleRest: {
     fontSize: 26,
     fontWeight: '800' as const,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   categoryRow: {
     flexDirection: 'row',
@@ -356,11 +358,11 @@ const styles = StyleSheet.create({
   categoryLabel: {
     fontSize: 10,
     fontWeight: '500' as const,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     textAlign: 'center' as const,
   },
   categoryLabelActive: {
-    color: Colors.primary,
+    color: colors.primary,
     fontWeight: '600' as const,
   },
   categoryUnderline: {
@@ -369,7 +371,7 @@ const styles = StyleSheet.create({
     left: 8,
     right: 8,
     height: 2,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     borderRadius: 1,
   },
   filterRow: {
@@ -394,31 +396,30 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: Colors.searchBg,
+    backgroundColor: colors.searchBg,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   filterChipActive: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
   filterChipAccepted: {
-    backgroundColor: Colors.accepted,
-    borderColor: Colors.accepted,
+    backgroundColor: colors.accepted,
+    borderColor: colors.accepted,
   },
   filterChipRefused: {
-    backgroundColor: Colors.refused,
-    borderColor: Colors.refused,
+    backgroundColor: colors.refused,
+    borderColor: colors.refused,
   },
   filterChipText: {
     fontSize: 12,
     fontWeight: '500' as const,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   filterChipTextActive: {
     color: '#FFFFFF',
   },
-
   centerButtonWrap: {
     position: 'absolute',
     right: 20,
@@ -426,7 +427,7 @@ const styles = StyleSheet.create({
     height: 44,
     borderRadius: 22,
     overflow: 'hidden',
-    shadowColor: Colors.shadow,
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 6,
@@ -435,11 +436,11 @@ const styles = StyleSheet.create({
   centerButton: {
     flex: 1,
     borderRadius: 22,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   selectedCard: {
     position: 'absolute',
@@ -450,9 +451,9 @@ const styles = StyleSheet.create({
   webHeader: {
     paddingHorizontal: 20,
     paddingBottom: 8,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    borderBottomColor: colors.border,
     gap: 4,
   },
   webList: {
@@ -467,7 +468,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: Colors.searchBg,
+    backgroundColor: colors.searchBg,
     paddingHorizontal: 16,
     paddingVertical: 12,
     marginHorizontal: 16,
@@ -476,12 +477,12 @@ const styles = StyleSheet.create({
   },
   webMapNoticeText: {
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     fontWeight: '400' as const,
   },
   emptyText: {
     textAlign: 'center' as const,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     fontSize: 15,
     marginTop: 40,
   },

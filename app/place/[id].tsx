@@ -4,7 +4,7 @@ import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowLeft, CheckCircle, XCircle, MapPin, Clock, Users, TrendingUp, ThumbsUp, ThumbsDown } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
-import Colors from '@/constants/colors';
+import { useThemeColors, ThemeColors } from '@/constants/colors';
 import { usePlaces } from '@/providers/PlacesProvider';
 import { useUser } from '@/providers/UserProvider';
 import { CATEGORY_LABELS } from '@/types';
@@ -15,6 +15,8 @@ export default function PlaceDetailScreen() {
   const router = useRouter();
   const { getPlaceById, updatePlaceReport } = usePlaces();
   const { incrementReports } = useUser();
+  const colors = useThemeColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const scaleAccepted = useRef(new Animated.Value(1)).current;
   const scaleRefused = useRef(new Animated.Value(1)).current;
 
@@ -38,7 +40,7 @@ export default function PlaceDetailScreen() {
         <View style={[styles.container, { paddingTop: insets.top }]}>
           <View style={styles.topBar}>
             <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-              <ArrowLeft size={20} color={Colors.textPrimary} strokeWidth={1.5} />
+              <ArrowLeft size={20} color={colors.textPrimary} strokeWidth={1.5} />
             </TouchableOpacity>
           </View>
           <View style={styles.notFound}>
@@ -56,18 +58,18 @@ export default function PlaceDetailScreen() {
         <View style={[styles.heroSection, { paddingTop: insets.top + 8 }]}>
           <View style={styles.heroNav}>
             <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-              <ArrowLeft size={20} color={Colors.textPrimary} strokeWidth={1.5} />
+              <ArrowLeft size={20} color={colors.textPrimary} strokeWidth={1.5} />
             </TouchableOpacity>
           </View>
 
           <View style={styles.statusBanner}>
-            <View style={[styles.statusPill, { backgroundColor: place.accepted ? Colors.acceptedLight : Colors.refusedLight }]}>
+            <View style={[styles.statusPill, { backgroundColor: place.accepted ? colors.acceptedLight : colors.refusedLight }]}>
               {place.accepted ? (
-                <CheckCircle size={16} color={Colors.accepted} strokeWidth={1.5} />
+                <CheckCircle size={16} color={colors.accepted} strokeWidth={1.5} />
               ) : (
-                <XCircle size={16} color={Colors.refused} strokeWidth={1.5} />
+                <XCircle size={16} color={colors.refused} strokeWidth={1.5} />
               )}
-              <Text style={[styles.statusPillText, { color: place.accepted ? Colors.accepted : Colors.refused }]}>
+              <Text style={[styles.statusPillText, { color: place.accepted ? colors.accepted : colors.refused }]}>
                 {place.accepted ? 'Amex acceptée' : 'Amex refusée'}
               </Text>
             </View>
@@ -86,7 +88,7 @@ export default function PlaceDetailScreen() {
 
         <View style={styles.content}>
           <View style={styles.addressRow}>
-            <MapPin size={16} color={Colors.textSecondary} strokeWidth={1.5} />
+            <MapPin size={16} color={colors.textSecondary} strokeWidth={1.5} />
             <Text style={styles.addressText}>{place.address}</Text>
           </View>
 
@@ -94,19 +96,19 @@ export default function PlaceDetailScreen() {
 
           <View style={styles.statsGrid}>
             <View style={styles.statBox}>
-              <TrendingUp size={18} color={Colors.textSecondary} strokeWidth={1.5} />
+              <TrendingUp size={18} color={colors.textSecondary} strokeWidth={1.5} />
               <Text style={styles.statBoxValue}>{acceptRate}%</Text>
               <Text style={styles.statBoxLabel}>Taux d'accept.</Text>
             </View>
             <View style={styles.statBoxDivider} />
             <View style={styles.statBox}>
-              <Users size={18} color={Colors.textSecondary} strokeWidth={1.5} />
+              <Users size={18} color={colors.textSecondary} strokeWidth={1.5} />
               <Text style={styles.statBoxValue}>{totalReports}</Text>
               <Text style={styles.statBoxLabel}>Signalements</Text>
             </View>
             <View style={styles.statBoxDivider} />
             <View style={styles.statBox}>
-              <Clock size={18} color={Colors.textSecondary} strokeWidth={1.5} />
+              <Clock size={18} color={colors.textSecondary} strokeWidth={1.5} />
               <Text style={styles.statBoxValue}>{place.lastReportDate.slice(5)}</Text>
               <Text style={styles.statBoxLabel}>Dernier</Text>
             </View>
@@ -132,11 +134,11 @@ export default function PlaceDetailScreen() {
             </View>
             <View style={styles.breakdownLabels}>
               <View style={styles.breakdownLabelRow}>
-                <View style={[styles.breakdownDot, { backgroundColor: Colors.accepted }]} />
+                <View style={[styles.breakdownDot, { backgroundColor: colors.accepted }]} />
                 <Text style={styles.breakdownLabelText}>Accepté : {place.reportsAccepted}</Text>
               </View>
               <View style={styles.breakdownLabelRow}>
-                <View style={[styles.breakdownDot, { backgroundColor: Colors.refused }]} />
+                <View style={[styles.breakdownDot, { backgroundColor: colors.refused }]} />
                 <Text style={styles.breakdownLabelText}>Refusé : {place.reportsRefused}</Text>
               </View>
             </View>
@@ -185,10 +187,10 @@ export default function PlaceDetailScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
   topBar: {
     flexDirection: 'row',
@@ -200,11 +202,11 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: Colors.searchBg,
+    backgroundColor: colors.searchBg,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   notFound: {
     flex: 1,
@@ -213,7 +215,7 @@ const styles = StyleSheet.create({
   },
   notFoundText: {
     fontSize: 16,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   heroSection: {
     paddingHorizontal: 20,
@@ -242,7 +244,7 @@ const styles = StyleSheet.create({
   heroName: {
     fontSize: 24,
     fontWeight: '700' as const,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     letterSpacing: -0.3,
     marginBottom: 8,
   },
@@ -250,7 +252,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   categoryTag: {
-    backgroundColor: Colors.searchBg,
+    backgroundColor: colors.searchBg,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 6,
@@ -258,11 +260,11 @@ const styles = StyleSheet.create({
   categoryTagText: {
     fontSize: 13,
     fontWeight: '500' as const,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   divider: {
     height: 1,
-    backgroundColor: Colors.border,
+    backgroundColor: colors.border,
   },
   content: {
     paddingTop: 0,
@@ -276,7 +278,7 @@ const styles = StyleSheet.create({
   },
   addressText: {
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     flex: 1,
     fontWeight: '400' as const,
   },
@@ -292,17 +294,17 @@ const styles = StyleSheet.create({
   },
   statBoxDivider: {
     width: 1,
-    backgroundColor: Colors.border,
+    backgroundColor: colors.border,
     marginVertical: 4,
   },
   statBoxValue: {
     fontSize: 17,
     fontWeight: '700' as const,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   statBoxLabel: {
     fontSize: 11,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     fontWeight: '400' as const,
   },
   breakdownSection: {
@@ -312,7 +314,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: '600' as const,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: 14,
   },
   breakdownBar: {
@@ -321,15 +323,15 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     overflow: 'hidden',
     marginBottom: 12,
-    backgroundColor: Colors.searchBg,
+    backgroundColor: colors.searchBg,
   },
   breakdownFillAccepted: {
-    backgroundColor: Colors.accepted,
+    backgroundColor: colors.accepted,
     borderTopLeftRadius: 4,
     borderBottomLeftRadius: 4,
   },
   breakdownFillRefused: {
-    backgroundColor: Colors.refused,
+    backgroundColor: colors.refused,
     borderTopRightRadius: 4,
     borderBottomRightRadius: 4,
   },
@@ -349,7 +351,7 @@ const styles = StyleSheet.create({
   },
   breakdownLabelText: {
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     fontWeight: '400' as const,
   },
   reportedByRow: {
@@ -361,13 +363,13 @@ const styles = StyleSheet.create({
   },
   reportedByLabel: {
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     fontWeight: '400' as const,
   },
   reportedByName: {
     fontSize: 14,
     fontWeight: '600' as const,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   contributeSection: {
     paddingHorizontal: 20,
@@ -377,12 +379,12 @@ const styles = StyleSheet.create({
   contributeTitle: {
     fontSize: 17,
     fontWeight: '600' as const,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: 4,
   },
   contributeSubtitle: {
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginBottom: 18,
     fontWeight: '400' as const,
   },
@@ -401,7 +403,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: Colors.accepted,
+    backgroundColor: colors.accepted,
     borderRadius: 12,
     paddingVertical: 14,
   },
@@ -410,7 +412,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: Colors.refused,
+    backgroundColor: colors.refused,
     borderRadius: 12,
     paddingVertical: 14,
   },

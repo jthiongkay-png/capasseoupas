@@ -1,13 +1,15 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Colors from '@/constants/colors';
+import { useThemeColors, ThemeColors } from '@/constants/colors';
 
 const LAST_UPDATED = '20 février 2026';
 
 export default function PrivacyScreen() {
   const insets = useSafeAreaInsets();
+  const colors = useThemeColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   return (
     <View style={styles.container}>
@@ -15,8 +17,8 @@ export default function PrivacyScreen() {
         options={{
           headerShown: true,
           title: 'Politique de confidentialité',
-          headerStyle: { backgroundColor: Colors.background },
-          headerTintColor: Colors.textPrimary,
+          headerStyle: { backgroundColor: colors.background },
+          headerTintColor: colors.textPrimary,
           headerBackTitle: 'Retour',
         }}
       />
@@ -28,12 +30,12 @@ export default function PrivacyScreen() {
         <Text style={styles.lastUpdated}>Dernière mise à jour : {LAST_UPDATED}</Text>
 
         <Text style={styles.intro}>
-          La présente Politique de Confidentialité décrit la manière dont Jamex (ci-après « nous », « notre » ou « l'Éditeur ») collecte, utilise et protège vos données personnelles lorsque vous utilisez l'application Jamex (ci-après « l'Application »), conformément au Règlement Général sur la Protection des Données (RGPD - Règlement UE 2016/679) et à la loi n°78-17 du 6 janvier 1978 relative à l'informatique, aux fichiers et aux libertés.
+          La présente Politique de Confidentialité décrit la manière dont Capasseoupas (ci-après « nous », « notre » ou « l'Éditeur ») collecte, utilise et protège vos données personnelles lorsque vous utilisez l'application Capasseoupas (ci-après « l'Application »), conformément au Règlement Général sur la Protection des Données (RGPD - Règlement UE 2016/679) et à la loi n°78-17 du 6 janvier 1978 relative à l'informatique, aux fichiers et aux libertés.
         </Text>
 
         <Text style={styles.heading}>1. Responsable du traitement</Text>
         <Text style={styles.body}>
-          Le responsable du traitement des données personnelles est Jamex, joignable à l'adresse : contact@jamex.app.
+          Le responsable du traitement des données personnelles est Capasseoupas, joignable à l'adresse : contact@capasseoupas.app.
         </Text>
 
         <Text style={styles.heading}>2. Données collectées</Text>
@@ -113,7 +115,7 @@ export default function PrivacyScreen() {
         <Text style={styles.bullet}>• Droit d'opposition (Art. 21 RGPD) : vous opposer au traitement de vos données.</Text>
         <Text style={styles.bullet}>• Droit de retirer votre consentement à tout moment pour les traitements fondés sur le consentement.</Text>
         <Text style={styles.body}>
-          Pour exercer ces droits, contactez-nous à : contact@jamex.app. Nous répondrons à votre demande dans un délai de 30 jours conformément au RGPD.
+          Pour exercer ces droits, contactez-nous à : contact@capasseoupas.app. Nous répondrons à votre demande dans un délai de 30 jours conformément au RGPD.
         </Text>
 
         <Text style={styles.heading}>9. Réclamation auprès de la CNIL</Text>
@@ -140,17 +142,17 @@ export default function PrivacyScreen() {
 
         <Text style={styles.heading}>13. Contact</Text>
         <Text style={styles.body}>
-          Pour toute question relative à cette Politique de Confidentialité ou à vos données personnelles, contactez-nous à : contact@jamex.app
+          Pour toute question relative à cette Politique de Confidentialité ou à vos données personnelles, contactez-nous à : contact@capasseoupas.app
         </Text>
       </ScrollView>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
   scroll: {
     flex: 1,
@@ -162,48 +164,48 @@ const styles = StyleSheet.create({
   lastUpdated: {
     fontSize: 12,
     fontWeight: '400' as const,
-    color: Colors.textTertiary,
+    color: colors.textTertiary,
     marginBottom: 16,
   },
   intro: {
     fontSize: 14,
     fontWeight: '400' as const,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     lineHeight: 22,
     marginBottom: 12,
   },
   heading: {
     fontSize: 16,
     fontWeight: '600' as const,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginTop: 24,
     marginBottom: 8,
   },
   subheading: {
     fontSize: 14,
     fontWeight: '600' as const,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginTop: 12,
     marginBottom: 6,
   },
   body: {
     fontSize: 14,
     fontWeight: '400' as const,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     lineHeight: 22,
     marginBottom: 8,
   },
   bullet: {
     fontSize: 14,
     fontWeight: '400' as const,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     lineHeight: 22,
     marginBottom: 4,
     paddingLeft: 12,
   },
   table: {
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
     borderRadius: 8,
     overflow: 'hidden',
     marginTop: 8,
@@ -212,19 +214,19 @@ const styles = StyleSheet.create({
   tableRow: {
     flexDirection: 'row',
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    borderBottomColor: colors.border,
   },
   tableCell: {
     flex: 1,
     fontSize: 12,
     fontWeight: '400' as const,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     padding: 10,
     lineHeight: 18,
   },
   tableCellHeader: {
     fontWeight: '600' as const,
-    color: Colors.textPrimary,
-    backgroundColor: Colors.searchBg,
+    color: colors.textPrimary,
+    backgroundColor: colors.searchBg,
   },
 });

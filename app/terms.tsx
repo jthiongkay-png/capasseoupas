@@ -1,13 +1,15 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Colors from '@/constants/colors';
+import { useThemeColors, ThemeColors } from '@/constants/colors';
 
 const LAST_UPDATED = '20 février 2026';
 
 export default function TermsScreen() {
   const insets = useSafeAreaInsets();
+  const colors = useThemeColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   return (
     <View style={styles.container}>
@@ -15,8 +17,8 @@ export default function TermsScreen() {
         options={{
           headerShown: true,
           title: "Conditions d'utilisation",
-          headerStyle: { backgroundColor: Colors.background },
-          headerTintColor: Colors.textPrimary,
+          headerStyle: { backgroundColor: colors.background },
+          headerTintColor: colors.textPrimary,
           headerBackTitle: 'Retour',
         }}
       />
@@ -28,7 +30,7 @@ export default function TermsScreen() {
         <Text style={styles.lastUpdated}>Dernière mise à jour : {LAST_UPDATED}</Text>
 
         <Text style={styles.intro}>
-          Les présentes Conditions Générales d'Utilisation (ci-après « CGU ») régissent l'accès et l'utilisation de l'application mobile Jamex (ci-après « l'Application »), éditée par Jamex (ci-après « l'Éditeur »).
+          Les présentes Conditions Générales d'Utilisation (ci-après « CGU ») régissent l'accès et l'utilisation de l'application mobile Capasseoupas (ci-après « l'Application »), éditée par Capasseoupas (ci-après « l'Éditeur »).
         </Text>
         <Text style={styles.intro}>
           En téléchargeant, installant ou utilisant l'Application, vous acceptez sans réserve les présentes CGU. Si vous n'acceptez pas ces conditions, veuillez ne pas utiliser l'Application.
@@ -36,7 +38,7 @@ export default function TermsScreen() {
 
         <Text style={styles.heading}>1. Objet de l'Application</Text>
         <Text style={styles.body}>
-          Jamex est une application communautaire gratuite permettant aux utilisateurs de signaler et consulter les commerces et établissements en France qui acceptent ou refusent les cartes American Express (Amex). L'Application n'est pas affiliée à, ni sponsorisée par American Express Company ou l'une de ses filiales.
+          Capasseoupas est une application communautaire gratuite permettant aux utilisateurs de signaler et consulter les commerces et établissements en France qui acceptent ou refusent les cartes American Express (Amex). L'Application n'est pas affiliée à, ni sponsorisée par American Express Company ou l'une de ses filiales.
         </Text>
 
         <Text style={styles.heading}>2. Accès à l'Application</Text>
@@ -100,17 +102,17 @@ export default function TermsScreen() {
 
         <Text style={styles.heading}>12. Contact</Text>
         <Text style={styles.body}>
-          Pour toute question relative aux présentes CGU, vous pouvez nous contacter à l'adresse suivante : contact@jamex.app
+          Pour toute question relative aux présentes CGU, vous pouvez nous contacter à l'adresse suivante : contact@capasseoupas.app
         </Text>
       </ScrollView>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
   scroll: {
     flex: 1,
@@ -122,34 +124,34 @@ const styles = StyleSheet.create({
   lastUpdated: {
     fontSize: 12,
     fontWeight: '400' as const,
-    color: Colors.textTertiary,
+    color: colors.textTertiary,
     marginBottom: 16,
   },
   intro: {
     fontSize: 14,
     fontWeight: '400' as const,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     lineHeight: 22,
     marginBottom: 12,
   },
   heading: {
     fontSize: 16,
     fontWeight: '600' as const,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginTop: 24,
     marginBottom: 8,
   },
   body: {
     fontSize: 14,
     fontWeight: '400' as const,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     lineHeight: 22,
     marginBottom: 8,
   },
   bullet: {
     fontSize: 14,
     fontWeight: '400' as const,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     lineHeight: 22,
     marginBottom: 4,
     paddingLeft: 12,

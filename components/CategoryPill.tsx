@@ -1,6 +1,6 @@
-import React, { useRef, useCallback } from 'react';
+import React, { useRef, useCallback, useMemo } from 'react';
 import { Text, StyleSheet, TouchableOpacity, Animated, View } from 'react-native';
-import Colors from '@/constants/colors';
+import { useThemeColors, ThemeColors } from '@/constants/colors';
 
 interface CategoryPillProps {
   label: string;
@@ -10,6 +10,8 @@ interface CategoryPillProps {
 
 function CategoryPillComponent({ label, selected, onPress }: CategoryPillProps) {
   const scaleAnim = useRef(new Animated.Value(1)).current;
+  const colors = useThemeColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const handlePressIn = useCallback(() => {
     Animated.spring(scaleAnim, { toValue: 0.93, useNativeDriver: true }).start();
@@ -47,7 +49,7 @@ function CategoryPillComponent({ label, selected, onPress }: CategoryPillProps) 
 
 export default React.memo(CategoryPillComponent);
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   pillOuter: {
     borderRadius: 20,
     overflow: 'hidden',
@@ -57,18 +59,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: Colors.searchBg,
+    backgroundColor: colors.searchBg,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   pillSelected: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
   pillText: {
     fontSize: 13,
     fontWeight: '500' as const,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   pillTextSelected: {
     color: '#FFFFFF',

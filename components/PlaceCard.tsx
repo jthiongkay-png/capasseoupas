@@ -1,8 +1,8 @@
-import React, { useRef, useCallback } from 'react';
+import React, { useRef, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
 import { MapPin, CheckCircle, XCircle, ChevronRight, UtensilsCrossed, Coffee, Wine, ShoppingBag, Hotel, Fuel, Apple, Ticket, Heart, Car, Navigation } from 'lucide-react-native';
 import { Place, PlaceCategory, CATEGORY_LABELS } from '@/types';
-import Colors from '@/constants/colors';
+import { useThemeColors, ThemeColors } from '@/constants/colors';
 
 const CATEGORY_ICON_MAP: Record<PlaceCategory, React.ComponentType<{ size: number; color: string; strokeWidth?: number }>> = {
   restaurant: UtensilsCrossed,
@@ -27,6 +27,8 @@ interface PlaceCardProps {
 
 function PlaceCardComponent({ place, onPress, compact = false, distance }: PlaceCardProps) {
   const scaleAnim = useRef(new Animated.Value(1)).current;
+  const colors = useThemeColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const totalReports = place.reportsAccepted + place.reportsRefused;
   const acceptRate = totalReports > 0 ? Math.round((place.reportsAccepted / totalReports) * 100) : 0;
 
@@ -57,17 +59,17 @@ function PlaceCardComponent({ place, onPress, compact = false, distance }: Place
       >
         <Animated.View style={[styles.compactCard, { transform: [{ scale: scaleAnim }] }]}>
           <View style={styles.compactIcon}>
-            <IconComponent size={16} color={Colors.textSecondary} strokeWidth={1.5} />
+            <IconComponent size={16} color={colors.textSecondary} strokeWidth={1.5} />
           </View>
           <View style={styles.compactInfo}>
             <Text style={styles.compactName} numberOfLines={1}>{place.name}</Text>
             <Text style={styles.compactAddress} numberOfLines={1}>{place.address}</Text>
           </View>
-          <View style={[styles.compactBadge, { backgroundColor: place.accepted ? Colors.acceptedLight : Colors.refusedLight }]}>
+          <View style={[styles.compactBadge, { backgroundColor: place.accepted ? colors.acceptedLight : colors.refusedLight }]}>
             {place.accepted ? (
-              <CheckCircle size={14} color={Colors.accepted} strokeWidth={1.5} />
+              <CheckCircle size={14} color={colors.accepted} strokeWidth={1.5} />
             ) : (
-              <XCircle size={14} color={Colors.refused} strokeWidth={1.5} />
+              <XCircle size={14} color={colors.refused} strokeWidth={1.5} />
             )}
           </View>
         </Animated.View>
@@ -86,30 +88,30 @@ function PlaceCardComponent({ place, onPress, compact = false, distance }: Place
       <Animated.View style={[styles.card, { transform: [{ scale: scaleAnim }] }]}>
         <View style={styles.cardHeader}>
           <View style={styles.iconContainer}>
-            <IconComponent size={18} color={Colors.textSecondary} strokeWidth={1.5} />
+            <IconComponent size={18} color={colors.textSecondary} strokeWidth={1.5} />
           </View>
           <View style={styles.headerInfo}>
             <Text style={styles.name} numberOfLines={1}>{place.name}</Text>
             <Text style={styles.category}>{CATEGORY_LABELS[place.category]}</Text>
           </View>
-          <View style={[styles.statusBadge, { backgroundColor: place.accepted ? Colors.acceptedLight : Colors.refusedLight }]}>
+          <View style={[styles.statusBadge, { backgroundColor: place.accepted ? colors.acceptedLight : colors.refusedLight }]}>
             {place.accepted ? (
-              <CheckCircle size={14} color={Colors.accepted} strokeWidth={1.5} />
+              <CheckCircle size={14} color={colors.accepted} strokeWidth={1.5} />
             ) : (
-              <XCircle size={14} color={Colors.refused} strokeWidth={1.5} />
+              <XCircle size={14} color={colors.refused} strokeWidth={1.5} />
             )}
-            <Text style={[styles.statusText, { color: place.accepted ? Colors.accepted : Colors.refused }]}>
+            <Text style={[styles.statusText, { color: place.accepted ? colors.accepted : colors.refused }]}>
               {place.accepted ? 'Accepté' : 'Refusé'}
             </Text>
           </View>
         </View>
 
         <View style={styles.addressRow}>
-          <MapPin size={13} color={Colors.textTertiary} strokeWidth={1.5} />
+          <MapPin size={13} color={colors.textTertiary} strokeWidth={1.5} />
           <Text style={styles.address} numberOfLines={1}>{place.address}</Text>
           {distance ? (
             <View style={styles.distanceBadge}>
-              <Navigation size={10} color={Colors.primary} strokeWidth={2} />
+              <Navigation size={10} color={colors.accent} strokeWidth={2} />
               <Text style={styles.distanceText}>{distance}</Text>
             </View>
           ) : null}
@@ -127,7 +129,7 @@ function PlaceCardComponent({ place, onPress, compact = false, distance }: Place
               <Text style={styles.statLabel}>signalements</Text>
             </View>
           </View>
-          <ChevronRight size={16} color={Colors.textTertiary} strokeWidth={1.5} />
+          <ChevronRight size={16} color={colors.textTertiary} strokeWidth={1.5} />
         </View>
       </Animated.View>
     </TouchableOpacity>
@@ -136,15 +138,15 @@ function PlaceCardComponent({ place, onPress, compact = false, distance }: Place
 
 export default React.memo(PlaceCardComponent);
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   card: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 14,
     padding: 16,
     marginHorizontal: 16,
     marginVertical: 5,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   cardHeader: {
     flexDirection: 'row',
@@ -157,9 +159,9 @@ const styles = StyleSheet.create({
     borderRadius: 19,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Colors.searchBg,
+    backgroundColor: colors.searchBg,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   headerInfo: {
     flex: 1,
@@ -168,12 +170,12 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 15,
     fontWeight: '600' as const,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     letterSpacing: -0.2,
   },
   category: {
     fontSize: 12,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginTop: 1,
     fontWeight: '400' as const,
   },
@@ -198,7 +200,7 @@ const styles = StyleSheet.create({
   },
   address: {
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     flex: 1,
     fontWeight: '400' as const,
   },
@@ -207,7 +209,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     borderTopWidth: 1,
-    borderTopColor: Colors.border,
+    borderTopColor: colors.border,
     paddingTop: 12,
   },
   stats: {
@@ -222,29 +224,29 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 14,
     fontWeight: '600' as const,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   statLabel: {
     fontSize: 12,
-    color: Colors.textTertiary,
+    color: colors.textTertiary,
     fontWeight: '400' as const,
   },
   statDivider: {
     width: 1,
     height: 14,
-    backgroundColor: Colors.border,
+    backgroundColor: colors.border,
     marginHorizontal: 12,
   },
   compactCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 12,
     marginHorizontal: 16,
     marginVertical: 3,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   compactIcon: {
     width: 32,
@@ -252,7 +254,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Colors.searchBg,
+    backgroundColor: colors.searchBg,
   },
   compactInfo: {
     flex: 1,
@@ -261,11 +263,11 @@ const styles = StyleSheet.create({
   compactName: {
     fontSize: 14,
     fontWeight: '500' as const,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   compactAddress: {
     fontSize: 11,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginTop: 1,
   },
   compactBadge: {
@@ -279,15 +281,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 3,
-    backgroundColor: '#EBF2FF',
+    backgroundColor: colors.searchBg,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 10,
     marginLeft: 6,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   distanceText: {
     fontSize: 11,
     fontWeight: '600' as const,
-    color: Colors.primary,
+    color: colors.accent,
   },
 });

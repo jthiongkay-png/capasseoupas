@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, FlatList, TextInput, ScrollView, ActivityIndica
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Search } from 'lucide-react-native';
-import Colors from '@/constants/colors';
+import { useThemeColors, ThemeColors } from '@/constants/colors';
 import { useFilteredPlaces } from '@/providers/PlacesProvider';
 import { Place, PlaceCategory, CATEGORY_LABELS } from '@/types';
 import PlaceCard from '@/components/PlaceCard';
@@ -31,6 +31,8 @@ export default function ExploreScreen() {
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<PlaceCategory | null>(null);
   const [statusFilter, setStatusFilter] = useState<'all' | 'accepted' | 'refused'>('all');
+  const colors = useThemeColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const places = useFilteredPlaces(search, selectedCategory, statusFilter);
   const { getDistanceFromUser, formatDistance, userLocation } = useLocation();
@@ -80,11 +82,11 @@ export default function ExploreScreen() {
 
       <View style={styles.searchContainer}>
         <View style={styles.searchBar}>
-          <Search size={18} color={Colors.textTertiary} strokeWidth={1.5} />
+          <Search size={18} color={colors.textTertiary} strokeWidth={1.5} />
           <TextInput
             style={styles.searchInput}
             placeholder="Rechercher des lieux ou adresses..."
-            placeholderTextColor={Colors.textTertiary}
+            placeholderTextColor={colors.textTertiary}
             value={search}
             onChangeText={setSearch}
             testID="search-input"
@@ -139,10 +141,10 @@ export default function ExploreScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
   header: {
     paddingHorizontal: 20,
@@ -152,12 +154,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 26,
     fontWeight: '700' as const,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     letterSpacing: -0.5,
   },
   subtitle: {
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginTop: 2,
     fontWeight: '400' as const,
   },
@@ -169,18 +171,18 @@ const styles = StyleSheet.create({
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.searchBg,
+    backgroundColor: colors.searchBg,
     borderRadius: 28,
     paddingHorizontal: 16,
     paddingVertical: 12,
     gap: 10,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   searchInput: {
     flex: 1,
     fontSize: 15,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     padding: 0,
   },
   statusRow: {
@@ -215,12 +217,12 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 17,
     fontWeight: '600' as const,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: 6,
   },
   emptyText: {
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     textAlign: 'center',
     fontWeight: '400' as const,
   },

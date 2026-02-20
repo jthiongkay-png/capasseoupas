@@ -5,7 +5,7 @@ import createContextHook from '@nkzw/create-context-hook';
 import { Place, PlaceCategory } from '@/types';
 import { MOCK_PLACES } from '@/mocks/places';
 
-const STORAGE_KEY = 'jamex_places';
+const STORAGE_KEY = 'capasseoupas_places';
 
 export const [PlacesProvider, usePlaces] = createContextHook(() => {
   const [places, setPlaces] = useState<Place[]>([]);

@@ -4,7 +4,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import createContextHook from '@nkzw/create-context-hook';
 import { User } from '@/types';
 
-const USER_KEY = 'jamex_user';
+const USER_KEY = 'capasseoupas_user';
 
 function generateId() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2);

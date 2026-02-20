@@ -1,11 +1,11 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MapPin, CheckCircle, XCircle, X, ChevronDown } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
-import Colors from '@/constants/colors';
+import { useThemeColors, ThemeColors } from '@/constants/colors';
 import { usePlaces } from '@/providers/PlacesProvider';
 import { useUser } from '@/providers/UserProvider';
 import { PlaceCategory, CATEGORY_LABELS } from '@/types';
@@ -38,6 +38,8 @@ export default function AddReportScreen() {
   const router = useRouter();
   const { addPlace } = usePlaces();
   const { user, incrementReports } = useUser();
+  const colors = useThemeColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const [name, setName] = useState('');
   const [address, setAddress] = useState('');
@@ -163,7 +165,7 @@ export default function AddReportScreen() {
       >
         <View style={[styles.topBar, { paddingTop: insets.top + 8 }]}>
           <TouchableOpacity onPress={() => router.back()} style={styles.closeButton}>
-            <X size={20} color={Colors.textPrimary} strokeWidth={1.5} />
+            <X size={20} color={colors.textPrimary} strokeWidth={1.5} />
           </TouchableOpacity>
           <Text style={styles.topTitle}>Nouveau signalement</Text>
           <View style={{ width: 36 }} />
@@ -177,7 +179,7 @@ export default function AddReportScreen() {
         >
           <View style={styles.heroSection}>
             <View style={styles.heroIcon}>
-              <MapPin size={24} color={Colors.textPrimary} strokeWidth={1.5} />
+              <MapPin size={24} color={colors.textPrimary} strokeWidth={1.5} />
             </View>
             <Text style={styles.heroTitle}>Signaler un lieu</Text>
             <Text style={styles.heroSubtitle}>Aidez la communauté en partageant votre expérience</Text>
@@ -188,14 +190,14 @@ export default function AddReportScreen() {
             <TextInput
               style={[styles.input, showSuggestions && styles.inputWithSuggestions]}
               placeholder="ex. Restaurant Le Marais"
-              placeholderTextColor={Colors.textTertiary}
+              placeholderTextColor={colors.textTertiary}
               value={name}
               onChangeText={handleNameChange}
               testID="input-name"
             />
             {loadingSuggestions && (
               <View style={styles.loadingRow}>
-                <ActivityIndicator size="small" color={Colors.textSecondary} />
+                <ActivityIndicator size="small" color={colors.textSecondary} />
                 <Text style={styles.loadingText}>Recherche en cours...</Text>
               </View>
             )}
@@ -215,7 +217,7 @@ export default function AddReportScreen() {
                       activeOpacity={0.6}
                     >
                       <View style={styles.suggestionIcon}>
-                        <MapPin size={14} color={Colors.textSecondary} strokeWidth={1.5} />
+                        <MapPin size={14} color={colors.textSecondary} strokeWidth={1.5} />
                       </View>
                       <View style={styles.suggestionTextContainer}>
                         <Text style={styles.suggestionName} numberOfLines={1}>{displayName}</Text>
@@ -233,7 +235,7 @@ export default function AddReportScreen() {
             <TextInput
               style={styles.input}
               placeholder="ex. 12 Rue du Temple, Paris"
-              placeholderTextColor={Colors.textTertiary}
+              placeholderTextColor={colors.textTertiary}
               value={address}
               onChangeText={setAddress}
               testID="input-address"
@@ -248,7 +250,7 @@ export default function AddReportScreen() {
               activeOpacity={0.7}
             >
               <Text style={styles.selectText}>{CATEGORY_LABELS[category]}</Text>
-              <ChevronDown size={18} color={Colors.textSecondary} strokeWidth={1.5} />
+              <ChevronDown size={18} color={colors.textSecondary} strokeWidth={1.5} />
             </TouchableOpacity>
             {showCategories && (
               <View style={styles.categoryGrid}>
@@ -283,7 +285,7 @@ export default function AddReportScreen() {
                     accepted === true && styles.acceptButtonYesActive,
                   ]}
                 >
-                  <CheckCircle size={20} color={accepted === true ? '#FFF' : Colors.accepted} strokeWidth={1.5} />
+                  <CheckCircle size={20} color={accepted === true ? '#FFF' : colors.accepted} strokeWidth={1.5} />
                   <Text style={[styles.acceptButtonText, accepted === true && styles.acceptButtonTextActive]}>
                     Oui, acceptée
                   </Text>
@@ -301,7 +303,7 @@ export default function AddReportScreen() {
                     accepted === false && styles.acceptButtonNoActive,
                   ]}
                 >
-                  <XCircle size={20} color={accepted === false ? '#FFF' : Colors.refused} strokeWidth={1.5} />
+                  <XCircle size={20} color={accepted === false ? '#FFF' : colors.refused} strokeWidth={1.5} />
                   <Text style={[styles.acceptButtonText, accepted === false && styles.acceptButtonTextActive]}>
                     Non, refusée
                   </Text>
@@ -328,10 +330,10 @@ export default function AddReportScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
   topBar: {
     flexDirection: 'row',
@@ -339,24 +341,24 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingBottom: 14,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    borderBottomColor: colors.border,
   },
   closeButton: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: Colors.searchBg,
+    backgroundColor: colors.searchBg,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   topTitle: {
     fontSize: 16,
     fontWeight: '600' as const,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   scroll: {
     flex: 1,
@@ -373,22 +375,22 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 26,
-    backgroundColor: Colors.searchBg,
+    backgroundColor: colors.searchBg,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 14,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   heroTitle: {
     fontSize: 22,
     fontWeight: '700' as const,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     letterSpacing: -0.3,
   },
   heroSubtitle: {
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginTop: 4,
     fontWeight: '400' as const,
   },
@@ -398,33 +400,33 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '500' as const,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: 8,
   },
   input: {
-    backgroundColor: Colors.background,
+    backgroundColor: colors.inputBg,
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 15,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   selectButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: Colors.background,
+    backgroundColor: colors.inputBg,
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   selectText: {
     fontSize: 15,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   categoryGrid: {
     flexDirection: 'row',
@@ -436,18 +438,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.inputBg,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   categoryOptionSelected: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
   categoryOptionText: {
     fontSize: 13,
     fontWeight: '500' as const,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
   },
   categoryOptionTextSelected: {
     color: '#FFFFFF',
@@ -471,25 +473,25 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   acceptButtonYes: {
-    borderColor: Colors.border,
-    backgroundColor: Colors.background,
+    borderColor: colors.border,
+    backgroundColor: colors.inputBg,
   },
   acceptButtonYesActive: {
-    backgroundColor: Colors.accepted,
-    borderColor: Colors.accepted,
+    backgroundColor: colors.accepted,
+    borderColor: colors.accepted,
   },
   acceptButtonNo: {
-    borderColor: Colors.border,
-    backgroundColor: Colors.background,
+    borderColor: colors.border,
+    backgroundColor: colors.inputBg,
   },
   acceptButtonNoActive: {
-    backgroundColor: Colors.refused,
-    borderColor: Colors.refused,
+    backgroundColor: colors.refused,
+    borderColor: colors.refused,
   },
   acceptButtonText: {
     fontSize: 14,
     fontWeight: '500' as const,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   acceptButtonTextActive: {
     color: '#FFFFFF',
@@ -500,7 +502,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   submitButton: {
-    backgroundColor: Colors.accent,
+    backgroundColor: colors.accent,
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',
@@ -517,7 +519,7 @@ const styles = StyleSheet.create({
   inputWithSuggestions: {
     borderBottomLeftRadius: 0,
     borderBottomRightRadius: 0,
-    borderBottomColor: Colors.border,
+    borderBottomColor: colors.border,
   },
   loadingRow: {
     flexDirection: 'row',
@@ -528,13 +530,13 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 13,
-    color: Colors.textTertiary,
+    color: colors.textTertiary,
   },
   suggestionsContainer: {
-    backgroundColor: Colors.background,
+    backgroundColor: colors.surface,
     borderWidth: 1,
     borderTopWidth: 0,
-    borderColor: Colors.border,
+    borderColor: colors.border,
     borderBottomLeftRadius: 12,
     borderBottomRightRadius: 12,
     overflow: 'hidden',
@@ -548,13 +550,13 @@ const styles = StyleSheet.create({
   },
   suggestionItemBorder: {
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    borderBottomColor: colors.border,
   },
   suggestionIcon: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: Colors.searchBg,
+    backgroundColor: colors.searchBg,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -564,11 +566,11 @@ const styles = StyleSheet.create({
   suggestionName: {
     fontSize: 14,
     fontWeight: '500' as const,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   suggestionAddress: {
     fontSize: 12,
-    color: Colors.textSecondary,
+    color: colors.textSecondary,
     marginTop: 2,
   },
 });
