@@ -401,8 +401,8 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderColor: colors.border,
   },
   filterChipActive: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
+    backgroundColor: colors.filterActive,
+    borderColor: colors.filterActive,
   },
   filterChipAccepted: {
     backgroundColor: colors.accepted,
@@ -422,7 +422,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   centerButtonWrap: {
     position: 'absolute',
-    right: 20,
+    right: 27,
     width: 44,
     height: 44,
     borderRadius: 22,

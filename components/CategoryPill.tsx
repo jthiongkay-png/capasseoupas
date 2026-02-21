@@ -64,8 +64,8 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderColor: colors.border,
   },
   pillSelected: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
+    backgroundColor: colors.filterActive,
+    borderColor: colors.filterActive,
   },
   pillText: {
     fontSize: 13,

@@ -26,6 +26,7 @@ export interface ThemeColors {
   warningLight: string;
   searchBg: string;
   inputBg: string;
+  filterActive: string;
 }
 
 const LightColors: ThemeColors = {
@@ -53,6 +54,7 @@ const LightColors: ThemeColors = {
   warningLight: '#FFF8E7',
   searchBg: '#F7F7F7',
   inputBg: '#FFFFFF',
+  filterActive: '#006FCF',
 };
 
 const DarkColors: ThemeColors = {
@@ -80,6 +82,7 @@ const DarkColors: ThemeColors = {
   warningLight: '#3A3A1A',
   searchBg: '#1C1C1E',
   inputBg: '#1C1C1E',
+  filterActive: '#006FCF',
 };
 
 export function useThemeColors(): ThemeColors {

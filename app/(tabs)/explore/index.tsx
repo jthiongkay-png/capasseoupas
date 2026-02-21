@@ -1,8 +1,8 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { View, Text, StyleSheet, FlatList, TextInput, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TextInput, ScrollView, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Search } from 'lucide-react-native';
+import { Search, Navigation, MapPin } from 'lucide-react-native';
 import { useThemeColors, ThemeColors } from '@/constants/colors';
 import { useFilteredPlaces } from '@/providers/PlacesProvider';
 import { Place, PlaceCategory, CATEGORY_LABELS } from '@/types';
@@ -121,6 +121,30 @@ export default function ExploreScreen() {
         ))}
       </ScrollView>
 
+      {userLocation && placesWithDistance.length > 0 && placesWithDistance[0].distance !== null && (
+        <TouchableOpacity
+          style={styles.closestCard}
+          onPress={() => handlePlacePress(placesWithDistance[0].place)}
+          activeOpacity={0.8}
+        >
+          <View style={styles.closestBadge}>
+            <Navigation size={14} color="#FFFFFF" strokeWidth={2} />
+            <Text style={styles.closestBadgeText}>Le plus proche</Text>
+          </View>
+          <View style={styles.closestContent}>
+            <View style={styles.closestInfo}>
+              <Text style={styles.closestName} numberOfLines={1}>{placesWithDistance[0].place.name}</Text>
+              <Text style={styles.closestAddress} numberOfLines={1}>{placesWithDistance[0].place.address}</Text>
+            </View>
+            <View style={styles.closestDistanceWrap}>
+              <MapPin size={14} color={colors.filterActive} strokeWidth={2} />
+              <Text style={styles.closestDistance}>{formatDistance(placesWithDistance[0].distance)}</Text>
+            </View>
+          </View>
+          <View style={[styles.closestStatusDot, { backgroundColor: placesWithDistance[0].place.accepted ? colors.accepted : colors.refused }]} />
+        </TouchableOpacity>
+      )}
+
       <FlatList
         data={placesWithDistance}
         renderItem={renderPlace}
@@ -225,5 +249,80 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     color: colors.textSecondary,
     textAlign: 'center',
     fontWeight: '400' as const,
+  },
+  closestCard: {
+    marginHorizontal: 20,
+    marginBottom: 12,
+    backgroundColor: colors.surface,
+    borderRadius: 16,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: colors.filterActive,
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+    position: 'relative' as const,
+  },
+  closestBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: colors.filterActive,
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 10,
+    marginBottom: 10,
+  },
+  closestBadgeText: {
+    fontSize: 11,
+    fontWeight: '700' as const,
+    color: '#FFFFFF',
+    textTransform: 'uppercase' as const,
+    letterSpacing: 0.5,
+  },
+  closestContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  closestInfo: {
+    flex: 1,
+    marginRight: 12,
+  },
+  closestName: {
+    fontSize: 16,
+    fontWeight: '600' as const,
+    color: colors.textPrimary,
+    marginBottom: 2,
+  },
+  closestAddress: {
+    fontSize: 13,
+    color: colors.textSecondary,
+    fontWeight: '400' as const,
+  },
+  closestDistanceWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: colors.searchBg,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 12,
+  },
+  closestDistance: {
+    fontSize: 13,
+    fontWeight: '600' as const,
+    color: colors.filterActive,
+  },
+  closestStatusDot: {
+    position: 'absolute' as const,
+    top: 14,
+    right: 14,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
   },
 });
