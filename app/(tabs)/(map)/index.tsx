@@ -284,7 +284,7 @@ export default function MapScreen() {
         {renderStatusFilters()}
       </View>
 
-      <TouchableOpacity style={[styles.centerButtonWrap, { bottom: selectedPlace ? 280 : 140 }]} onPress={handleCenterMap} activeOpacity={0.8}>
+      <TouchableOpacity style={[styles.centerButtonWrap, { bottom: selectedPlace ? 280 : 94 }]} onPress={handleCenterMap} activeOpacity={0.8}>
         <View style={styles.centerButton}>
           <Locate size={20} color={colors.primary} strokeWidth={1.5} />
         </View>

@@ -1,29 +1,46 @@
-import React, { useMemo, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Animated } from 'react-native';
+import React, { useMemo, useCallback, useRef, useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Animated, Alert, Image, Dimensions, Platform } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ArrowLeft, CheckCircle, XCircle, MapPin, Clock, Users, TrendingUp, ThumbsUp, ThumbsDown } from 'lucide-react-native';
+import { ArrowLeft, CheckCircle, XCircle, MapPin, Clock, Users, TrendingUp, ThumbsUp, ThumbsDown, Trash2, Phone, Globe, Navigation, Share2, AlertTriangle } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { useThemeColors, ThemeColors } from '@/constants/colors';
 import { usePlaces } from '@/providers/PlacesProvider';
 import { useUser } from '@/providers/UserProvider';
-import { CATEGORY_LABELS } from '@/types';
+import { CATEGORY_LABELS, PlaceCategory } from '@/types';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const HERO_HEIGHT = 220;
+
+const CATEGORY_PHOTOS: Record<PlaceCategory, string> = {
+  restaurant: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&q=80',
+  cafe: 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=800&q=80',
+  bar: 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=800&q=80',
+  shop: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800&q=80',
+  hotel: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80',
+  gas_station: 'https://images.unsplash.com/photo-1545262810-77515befe149?w=800&q=80',
+  grocery: 'https://images.unsplash.com/photo-1604719312566-8912e9227c6a?w=800&q=80',
+  entertainment: 'https://images.unsplash.com/photo-1603190287605-e6ade32fa852?w=800&q=80',
+  health: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=800&q=80',
+  transport: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=800&q=80',
+  other: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&q=80',
+};
 
 export default function PlaceDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { getPlaceById, updatePlaceReport } = usePlaces();
+  const { getPlaceById, updatePlaceReport, deletePlace } = usePlaces();
   const { incrementReports } = useUser();
   const colors = useThemeColors();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  const scaleAccepted = useRef(new Animated.Value(1)).current;
-  const scaleRefused = useRef(new Animated.Value(1)).current;
+  const scrollY = useRef(new Animated.Value(0)).current;
 
   const place = useMemo(() => getPlaceById(id ?? ''), [getPlaceById, id]);
 
   const totalReports = place ? place.reportsAccepted + place.reportsRefused : 0;
   const acceptRate = totalReports > 0 && place ? Math.round((place.reportsAccepted / totalReports) * 100) : 0;
+  const isNotAccepted = totalReports > 0 && acceptRate < 90;
 
   const handleReport = useCallback((accepted: boolean) => {
     if (!place) return;
@@ -32,6 +49,33 @@ export default function PlaceDetailScreen() {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     console.log('[PlaceDetail] Reported', place.name, 'as', accepted ? 'accepted' : 'refused');
   }, [place, updatePlaceReport, incrementReports]);
+
+  const handleDelete = useCallback(() => {
+    if (!place) return;
+    Alert.alert(
+      'Supprimer ce lieu',
+      `Êtes-vous sûr de vouloir supprimer "${place.name}" ? Cette action est irréversible.`,
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Supprimer',
+          style: 'destructive',
+          onPress: () => {
+            deletePlace(place.id);
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+            console.log('[PlaceDetail] Deleted place:', place.name);
+            router.back();
+          },
+        },
+      ]
+    );
+  }, [place, deletePlace, router]);
+
+  const headerOpacity = scrollY.interpolate({
+    inputRange: [0, HERO_HEIGHT - 80],
+    outputRange: [0, 1],
+    extrapolate: 'clamp',
+  });
 
   if (!place) {
     return (
@@ -51,73 +95,143 @@ export default function PlaceDetailScreen() {
     );
   }
 
+  const photoUrl = CATEGORY_PHOTOS[place.category];
+
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-        <View style={[styles.heroSection, { paddingTop: insets.top + 8 }]}>
-          <View style={styles.heroNav}>
-            <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-              <ArrowLeft size={20} color={colors.textPrimary} strokeWidth={1.5} />
-            </TouchableOpacity>
-          </View>
 
-          <View style={styles.statusBanner}>
-            <View style={[styles.statusPill, { backgroundColor: place.accepted ? colors.acceptedLight : colors.refusedLight }]}>
-              {place.accepted ? (
-                <CheckCircle size={16} color={colors.accepted} strokeWidth={1.5} />
+      <Animated.View style={[styles.stickyHeader, { paddingTop: insets.top, opacity: headerOpacity }]}>
+        <Text style={styles.stickyHeaderTitle} numberOfLines={1}>{place.name}</Text>
+      </Animated.View>
+
+      <View style={[styles.floatingNav, { top: insets.top + 8 }]}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.navButton}>
+          <ArrowLeft size={20} color="#FFF" strokeWidth={2} />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={handleDelete} style={styles.navButton}>
+          <Trash2 size={18} color="#FFF" strokeWidth={2} />
+        </TouchableOpacity>
+      </View>
+
+      <Animated.ScrollView
+        style={styles.container}
+        showsVerticalScrollIndicator={false}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: true }
+        )}
+        scrollEventThrottle={16}
+      >
+        <View style={styles.heroImageContainer}>
+          <Image
+            source={{ uri: photoUrl }}
+            style={styles.heroImage}
+            resizeMode="cover"
+          />
+          <View style={styles.heroOverlay} />
+          <View style={[styles.heroContent, { paddingTop: insets.top + 50 }]}>
+            <View style={styles.heroStatusRow}>
+              {isNotAccepted ? (
+                <View style={[styles.statusChip, styles.statusChipNotAccepted]}>
+                  <AlertTriangle size={14} color="#FF9500" strokeWidth={2} />
+                  <Text style={styles.statusChipTextWarning}>Non accepté</Text>
+                </View>
+              ) : place.accepted ? (
+                <View style={[styles.statusChip, styles.statusChipAccepted]}>
+                  <CheckCircle size={14} color="#34C759" strokeWidth={2} />
+                  <Text style={styles.statusChipTextAccepted}>Amex acceptée</Text>
+                </View>
               ) : (
-                <XCircle size={16} color={colors.refused} strokeWidth={1.5} />
+                <View style={[styles.statusChip, styles.statusChipRefused]}>
+                  <XCircle size={14} color="#FF453A" strokeWidth={2} />
+                  <Text style={styles.statusChipTextRefused}>Amex refusée</Text>
+                </View>
               )}
-              <Text style={[styles.statusPillText, { color: place.accepted ? colors.accepted : colors.refused }]}>
-                {place.accepted ? 'Amex acceptée' : 'Amex refusée'}
-              </Text>
             </View>
-          </View>
-
-          <Text style={styles.heroName}>{place.name}</Text>
-
-          <View style={styles.heroMetaRow}>
-            <View style={styles.categoryTag}>
-              <Text style={styles.categoryTagText}>{CATEGORY_LABELS[place.category]}</Text>
+            <Text style={styles.heroName}>{place.name}</Text>
+            <View style={styles.heroMeta}>
+              <Text style={styles.heroCategoryText}>{CATEGORY_LABELS[place.category]}</Text>
+              <View style={styles.heroDot} />
+              <Text style={styles.heroRateText}>{acceptRate}% d'acceptation</Text>
             </View>
           </View>
         </View>
 
-        <View style={styles.divider} />
+        <View style={styles.actionBar}>
+          <TouchableOpacity style={styles.actionItem} activeOpacity={0.7}>
+            <View style={styles.actionIcon}>
+              <Navigation size={18} color={colors.primary} strokeWidth={1.5} />
+            </View>
+            <Text style={styles.actionLabel}>Itinéraire</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.actionItem} activeOpacity={0.7}>
+            <View style={styles.actionIcon}>
+              <Phone size={18} color={colors.primary} strokeWidth={1.5} />
+            </View>
+            <Text style={styles.actionLabel}>Appeler</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.actionItem} activeOpacity={0.7}>
+            <View style={styles.actionIcon}>
+              <Globe size={18} color={colors.primary} strokeWidth={1.5} />
+            </View>
+            <Text style={styles.actionLabel}>Site web</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.actionItem} activeOpacity={0.7}>
+            <View style={styles.actionIcon}>
+              <Share2 size={18} color={colors.primary} strokeWidth={1.5} />
+            </View>
+            <Text style={styles.actionLabel}>Partager</Text>
+          </TouchableOpacity>
+        </View>
 
-        <View style={styles.content}>
-          <View style={styles.addressRow}>
-            <MapPin size={16} color={colors.textSecondary} strokeWidth={1.5} />
-            <Text style={styles.addressText}>{place.address}</Text>
+        <View style={styles.card}>
+          <View style={styles.addressSection}>
+            <MapPin size={18} color={colors.textSecondary} strokeWidth={1.5} />
+            <View style={styles.addressContent}>
+              <Text style={styles.addressText}>{place.address}</Text>
+              <Text style={styles.addressSub}>
+                {place.latitude.toFixed(4)}, {place.longitude.toFixed(4)}
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        {isNotAccepted && (
+          <View style={styles.warningBanner}>
+            <AlertTriangle size={18} color="#FF9500" strokeWidth={1.5} />
+            <View style={styles.warningTextContainer}>
+              <Text style={styles.warningTitle}>Statut : Non accepté</Text>
+              <Text style={styles.warningSubtext}>
+                Le taux d'acceptation ({acceptRate}%) est inférieur à 90%. Ce lieu est considéré comme ne prenant pas Amex.
+              </Text>
+            </View>
+          </View>
+        )}
+
+        <View style={styles.card}>
+          <Text style={styles.sectionTitle}>Statistiques</Text>
+          <View style={styles.statsRow}>
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>{acceptRate}%</Text>
+              <Text style={styles.statLabel}>Taux d'accept.</Text>
+            </View>
+            <View style={styles.statDivider} />
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>{totalReports}</Text>
+              <Text style={styles.statLabel}>Signalements</Text>
+            </View>
+            <View style={styles.statDivider} />
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>{place.lastReportDate.slice(5)}</Text>
+              <Text style={styles.statLabel}>Dernier</Text>
+            </View>
           </View>
 
-          <View style={styles.divider} />
-
-          <View style={styles.statsGrid}>
-            <View style={styles.statBox}>
-              <TrendingUp size={18} color={colors.textSecondary} strokeWidth={1.5} />
-              <Text style={styles.statBoxValue}>{acceptRate}%</Text>
-              <Text style={styles.statBoxLabel}>Taux d'accept.</Text>
+          <View style={styles.breakdownContainer}>
+            <View style={styles.breakdownHeader}>
+              <Text style={styles.breakdownTitle}>Répartition</Text>
             </View>
-            <View style={styles.statBoxDivider} />
-            <View style={styles.statBox}>
-              <Users size={18} color={colors.textSecondary} strokeWidth={1.5} />
-              <Text style={styles.statBoxValue}>{totalReports}</Text>
-              <Text style={styles.statBoxLabel}>Signalements</Text>
-            </View>
-            <View style={styles.statBoxDivider} />
-            <View style={styles.statBox}>
-              <Clock size={18} color={colors.textSecondary} strokeWidth={1.5} />
-              <Text style={styles.statBoxValue}>{place.lastReportDate.slice(5)}</Text>
-              <Text style={styles.statBoxLabel}>Dernier</Text>
-            </View>
-          </View>
-
-          <View style={styles.divider} />
-
-          <View style={styles.breakdownSection}>
-            <Text style={styles.sectionTitle}>Répartition des signalements</Text>
             <View style={styles.breakdownBar}>
               <View
                 style={[
@@ -143,46 +257,74 @@ export default function PlaceDetailScreen() {
               </View>
             </View>
           </View>
-
-          <View style={styles.divider} />
-
-          <View style={styles.reportedByRow}>
-            <Text style={styles.reportedByLabel}>Dernier signalement par</Text>
-            <Text style={styles.reportedByName}>{place.reportedBy}</Text>
-          </View>
-
-          <View style={styles.divider} />
-
-          <View style={styles.contributeSection}>
-            <Text style={styles.contributeTitle}>Confirmez ou mettez à jour</Text>
-            <Text style={styles.contributeSubtitle}>Votre carte Amex a-t-elle été acceptée ici ?</Text>
-            <View style={styles.contributeRow}>
-              <TouchableOpacity
-                style={styles.contributeButtonWrap}
-                onPress={() => handleReport(true)}
-                activeOpacity={0.8}
-              >
-                <View style={styles.contributeButtonAccepted}>
-                  <ThumbsUp size={18} color="#FFF" strokeWidth={1.5} />
-                  <Text style={styles.contributeButtonText}>Oui, acceptée</Text>
-                </View>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.contributeButtonWrap}
-                onPress={() => handleReport(false)}
-                activeOpacity={0.8}
-              >
-                <View style={styles.contributeButtonRefused}>
-                  <ThumbsDown size={18} color="#FFF" strokeWidth={1.5} />
-                  <Text style={styles.contributeButtonText}>Non, refusée</Text>
-                </View>
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          <View style={{ height: 40 }} />
         </View>
-      </ScrollView>
+
+        <View style={styles.card}>
+          <Text style={styles.sectionTitle}>Informations</Text>
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Catégorie</Text>
+            <Text style={styles.infoValue}>{CATEGORY_LABELS[place.category]}</Text>
+          </View>
+          <View style={styles.infoSeparator} />
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Dernier signalement</Text>
+            <Text style={styles.infoValue}>{place.lastReportDate}</Text>
+          </View>
+          <View style={styles.infoSeparator} />
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Signalé par</Text>
+            <Text style={styles.infoValue}>{place.reportedBy}</Text>
+          </View>
+          <View style={styles.infoSeparator} />
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Statut Amex</Text>
+            <Text style={[
+              styles.infoValue,
+              { color: isNotAccepted ? '#FF9500' : place.accepted ? colors.accepted : colors.refused }
+            ]}>
+              {isNotAccepted ? 'Non accepté' : place.accepted ? 'Acceptée' : 'Refusée'}
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.card}>
+          <Text style={styles.sectionTitle}>Votre expérience</Text>
+          <Text style={styles.contributeSubtitle}>Votre carte Amex a-t-elle été acceptée ici ?</Text>
+          <View style={styles.contributeRow}>
+            <TouchableOpacity
+              style={styles.contributeButtonWrap}
+              onPress={() => handleReport(true)}
+              activeOpacity={0.8}
+            >
+              <View style={styles.contributeButtonAccepted}>
+                <ThumbsUp size={18} color="#FFF" strokeWidth={1.5} />
+                <Text style={styles.contributeButtonText}>Acceptée</Text>
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.contributeButtonWrap}
+              onPress={() => handleReport(false)}
+              activeOpacity={0.8}
+            >
+              <View style={styles.contributeButtonRefused}>
+                <ThumbsDown size={18} color="#FFF" strokeWidth={1.5} />
+                <Text style={styles.contributeButtonText}>Refusée</Text>
+              </View>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <TouchableOpacity
+          style={styles.deleteButton}
+          onPress={handleDelete}
+          activeOpacity={0.7}
+        >
+          <Trash2 size={16} color="#FF453A" strokeWidth={1.5} />
+          <Text style={styles.deleteButtonText}>Supprimer ce lieu</Text>
+        </TouchableOpacity>
+
+        <View style={{ height: insets.bottom + 40 }} />
+      </Animated.ScrollView>
     </>
   );
 }
@@ -217,112 +359,255 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     fontSize: 16,
     color: colors.textSecondary,
   },
-  heroSection: {
+  stickyHeader: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 50,
+    backgroundColor: colors.background,
+    paddingBottom: 12,
+    paddingHorizontal: 60,
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  stickyHeaderTitle: {
+    fontSize: 16,
+    fontWeight: '600' as const,
+    color: colors.textPrimary,
+  },
+  floatingNav: {
+    position: 'absolute',
+    left: 16,
+    right: 16,
+    zIndex: 100,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  navButton: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  heroImageContainer: {
+    height: HERO_HEIGHT,
+    width: SCREEN_WIDTH,
+    position: 'relative',
+  },
+  heroImage: {
+    width: '100%',
+    height: '100%',
+  },
+  heroOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+  },
+  heroContent: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'flex-end',
     paddingHorizontal: 20,
     paddingBottom: 20,
   },
-  heroNav: {
+  heroStatusRow: {
     flexDirection: 'row',
-    marginBottom: 20,
-  },
-  statusBanner: {
-    flexDirection: 'row',
-    marginBottom: 12,
-  },
-  statusPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-  },
-  statusPillText: {
-    fontSize: 13,
-    fontWeight: '600' as const,
-  },
-  heroName: {
-    fontSize: 24,
-    fontWeight: '700' as const,
-    color: colors.textPrimary,
-    letterSpacing: -0.3,
     marginBottom: 8,
   },
-  heroMetaRow: {
-    flexDirection: 'row',
-  },
-  categoryTag: {
-    backgroundColor: colors.searchBg,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  categoryTagText: {
-    fontSize: 13,
-    fontWeight: '500' as const,
-    color: colors.textSecondary,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: colors.border,
-  },
-  content: {
-    paddingTop: 0,
-  },
-  addressRow: {
+  statusChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 16,
   },
-  addressText: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    flex: 1,
-    fontWeight: '400' as const,
+  statusChipAccepted: {
+    backgroundColor: 'rgba(52, 199, 89, 0.2)',
   },
-  statsGrid: {
+  statusChipRefused: {
+    backgroundColor: 'rgba(255, 69, 58, 0.2)',
+  },
+  statusChipNotAccepted: {
+    backgroundColor: 'rgba(255, 149, 0, 0.2)',
+  },
+  statusChipTextAccepted: {
+    fontSize: 12,
+    fontWeight: '600' as const,
+    color: '#34C759',
+  },
+  statusChipTextRefused: {
+    fontSize: 12,
+    fontWeight: '600' as const,
+    color: '#FF453A',
+  },
+  statusChipTextWarning: {
+    fontSize: 12,
+    fontWeight: '600' as const,
+    color: '#FF9500',
+  },
+  heroName: {
+    fontSize: 26,
+    fontWeight: '700' as const,
+    color: '#FFFFFF',
+    letterSpacing: -0.3,
+    marginBottom: 6,
+  },
+  heroMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  heroCategoryText: {
+    fontSize: 13,
+    fontWeight: '500' as const,
+    color: 'rgba(255,255,255,0.85)',
+  },
+  heroDot: {
+    width: 3,
+    height: 3,
+    borderRadius: 1.5,
+    backgroundColor: 'rgba(255,255,255,0.5)',
+  },
+  heroRateText: {
+    fontSize: 13,
+    fontWeight: '500' as const,
+    color: 'rgba(255,255,255,0.85)',
+  },
+  actionBar: {
     flexDirection: 'row',
     paddingVertical: 16,
-    paddingHorizontal: 20,
+    paddingHorizontal: 12,
+    backgroundColor: colors.background,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
-  statBox: {
+  actionItem: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 6,
+  },
+  actionIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.searchBg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  actionLabel: {
+    fontSize: 11,
+    fontWeight: '500' as const,
+    color: colors.primary,
+  },
+  card: {
+    backgroundColor: colors.surface,
+    marginHorizontal: 16,
+    marginTop: 12,
+    borderRadius: 14,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  sectionTitle: {
+    fontSize: 17,
+    fontWeight: '600' as const,
+    color: colors.textPrimary,
+    marginBottom: 14,
+  },
+  addressSection: {
+    flexDirection: 'row',
+    gap: 12,
+    alignItems: 'flex-start',
+  },
+  addressContent: {
+    flex: 1,
+  },
+  addressText: {
+    fontSize: 15,
+    color: colors.textPrimary,
+    fontWeight: '400' as const,
+    lineHeight: 20,
+  },
+  addressSub: {
+    fontSize: 12,
+    color: colors.textTertiary,
+    marginTop: 4,
+  },
+  warningBanner: {
+    flexDirection: 'row',
+    gap: 12,
+    marginHorizontal: 16,
+    marginTop: 12,
+    backgroundColor: colors.warningLight,
+    borderRadius: 14,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: colors.warning,
+    alignItems: 'flex-start',
+  },
+  warningTextContainer: {
+    flex: 1,
+  },
+  warningTitle: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: colors.warning,
+    marginBottom: 4,
+  },
+  warningSubtext: {
+    fontSize: 13,
+    fontWeight: '400' as const,
+    color: colors.textSecondary,
+    lineHeight: 18,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    marginBottom: 16,
+  },
+  statItem: {
     flex: 1,
     alignItems: 'center',
     gap: 4,
   },
-  statBoxDivider: {
+  statDivider: {
     width: 1,
     backgroundColor: colors.border,
     marginVertical: 4,
   },
-  statBoxValue: {
-    fontSize: 17,
+  statValue: {
+    fontSize: 20,
     fontWeight: '700' as const,
     color: colors.textPrimary,
   },
-  statBoxLabel: {
+  statLabel: {
     fontSize: 11,
     color: colors.textSecondary,
     fontWeight: '400' as const,
   },
-  breakdownSection: {
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+  breakdownContainer: {},
+  breakdownHeader: {
+    marginBottom: 10,
   },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '600' as const,
-    color: colors.textPrimary,
-    marginBottom: 14,
+  breakdownTitle: {
+    fontSize: 14,
+    fontWeight: '500' as const,
+    color: colors.textSecondary,
   },
   breakdownBar: {
     flexDirection: 'row',
     height: 8,
     borderRadius: 4,
     overflow: 'hidden',
-    marginBottom: 12,
+    marginBottom: 10,
     backgroundColor: colors.searchBg,
   },
   breakdownFillAccepted: {
@@ -354,44 +639,36 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     color: colors.textSecondary,
     fontWeight: '400' as const,
   },
-  reportedByRow: {
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+  infoRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    paddingVertical: 10,
   },
-  reportedByLabel: {
+  infoSeparator: {
+    height: 1,
+    backgroundColor: colors.border,
+  },
+  infoLabel: {
     fontSize: 14,
     color: colors.textSecondary,
     fontWeight: '400' as const,
   },
-  reportedByName: {
+  infoValue: {
     fontSize: 14,
-    fontWeight: '600' as const,
+    fontWeight: '500' as const,
     color: colors.textPrimary,
-  },
-  contributeSection: {
-    paddingHorizontal: 20,
-    paddingVertical: 20,
-    alignItems: 'center',
-  },
-  contributeTitle: {
-    fontSize: 17,
-    fontWeight: '600' as const,
-    color: colors.textPrimary,
-    marginBottom: 4,
   },
   contributeSubtitle: {
     fontSize: 13,
     color: colors.textSecondary,
-    marginBottom: 18,
+    marginBottom: 16,
+    marginTop: -6,
     fontWeight: '400' as const,
   },
   contributeRow: {
     flexDirection: 'row',
     gap: 12,
-    width: '100%',
   },
   contributeButtonWrap: {
     flex: 1,
@@ -420,5 +697,23 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     fontSize: 14,
     fontWeight: '600' as const,
     color: '#FFF',
+  },
+  deleteButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginHorizontal: 16,
+    marginTop: 20,
+    paddingVertical: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 69, 58, 0.3)',
+    backgroundColor: colors.background,
+  },
+  deleteButtonText: {
+    fontSize: 14,
+    fontWeight: '500' as const,
+    color: '#FF453A',
   },
 });

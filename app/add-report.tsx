@@ -116,6 +116,28 @@ export default function AddReportScreen() {
     };
   }, []);
 
+  const doSubmit = useCallback(() => {
+    const newPlace = {
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2),
+      name: name.trim(),
+      address: address.trim(),
+      category,
+      latitude: latitude ?? 48.8566 + (Math.random() - 0.5) * 0.04,
+      longitude: longitude ?? 2.3522 + (Math.random() - 0.5) * 0.04,
+      accepted: accepted!,
+      reportsAccepted: accepted ? 1 : 0,
+      reportsRefused: accepted ? 0 : 1,
+      lastReportDate: new Date().toISOString().split('T')[0],
+      reportedBy: user.username,
+    };
+
+    addPlace(newPlace);
+    incrementReports();
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    console.log('[AddReport] Place added:', newPlace.name);
+    router.back();
+  }, [name, address, category, accepted, latitude, longitude, addPlace, incrementReports, user.username, router]);
+
   const handleSubmit = useCallback(() => {
     if (!name.trim()) {
       Alert.alert('Information manquante', 'Veuillez entrer le nom du lieu.');
@@ -130,26 +152,15 @@ export default function AddReportScreen() {
       return;
     }
 
-    const newPlace = {
-      id: Date.now().toString(36) + Math.random().toString(36).slice(2),
-      name: name.trim(),
-      address: address.trim(),
-      category,
-      latitude: latitude ?? 48.8566 + (Math.random() - 0.5) * 0.04,
-      longitude: longitude ?? 2.3522 + (Math.random() - 0.5) * 0.04,
-      accepted,
-      reportsAccepted: accepted ? 1 : 0,
-      reportsRefused: accepted ? 0 : 1,
-      lastReportDate: new Date().toISOString().split('T')[0],
-      reportedBy: user.username,
-    };
-
-    addPlace(newPlace);
-    incrementReports();
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    console.log('[AddReport] Place added:', newPlace.name);
-    router.back();
-  }, [name, address, category, accepted, latitude, longitude, addPlace, incrementReports, user.username, router]);
+    Alert.alert(
+      'Confirmer le signalement',
+      `Voulez-vous signaler "${name.trim()}" comme ${accepted ? 'acceptant' : 'refusant'} Amex ?`,
+      [
+        { text: 'Annuler', style: 'cancel' },
+        { text: 'Confirmer', onPress: doSubmit },
+      ]
+    );
+  }, [name, address, accepted, doSubmit]);
 
   const handleAcceptedPress = useCallback((value: boolean) => {
     setAccepted(value);

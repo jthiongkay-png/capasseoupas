@@ -60,11 +60,13 @@ export const [PlacesProvider, usePlaces] = createContextHook(() => {
         if (p.id === placeId) {
           const newAccepted = accepted ? p.reportsAccepted + 1 : p.reportsAccepted;
           const newRefused = accepted ? p.reportsRefused : p.reportsRefused + 1;
+          const total = newAccepted + newRefused;
+          const acceptRate = total > 0 ? (newAccepted / total) * 100 : 0;
           return {
             ...p,
             reportsAccepted: newAccepted,
             reportsRefused: newRefused,
-            accepted: newAccepted >= newRefused,
+            accepted: acceptRate >= 90,
             lastReportDate: new Date().toISOString().split('T')[0],
           };
         }
@@ -73,6 +75,15 @@ export const [PlacesProvider, usePlaces] = createContextHook(() => {
       saveMutation.mutate(updated);
       return updated;
     });
+  }, [saveMutation]);
+
+  const deletePlace = useCallback((placeId: string) => {
+    setPlaces((prev) => {
+      const updated = prev.filter((p) => p.id !== placeId);
+      saveMutation.mutate(updated);
+      return updated;
+    });
+    console.log('[PlacesProvider] Deleted place:', placeId);
   }, [saveMutation]);
 
   const getPlaceById = useCallback(
@@ -85,6 +96,7 @@ export const [PlacesProvider, usePlaces] = createContextHook(() => {
     isLoading: placesQuery.isLoading,
     addPlace,
     updatePlaceReport,
+    deletePlace,
     getPlaceById,
   };
 });
