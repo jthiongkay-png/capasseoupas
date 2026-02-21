@@ -47,10 +47,10 @@ interface Region {
 }
 
 const DEFAULT_REGION: Region = {
-  latitude: 48.8606,
-  longitude: 2.3476,
-  latitudeDelta: 0.04,
-  longitudeDelta: 0.04,
+  latitude: 46.6034,
+  longitude: 2.3488,
+  latitudeDelta: 10.0,
+  longitudeDelta: 10.0,
 };
 
 export default function MapScreen() {

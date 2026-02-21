@@ -7,9 +7,9 @@ interface LocationCoords {
   longitude: number;
 }
 
-const PARIS_DEFAULT: LocationCoords = {
-  latitude: 48.8606,
-  longitude: 2.3476,
+const FRANCE_DEFAULT: LocationCoords = {
+  latitude: 46.6034,
+  longitude: 2.3488,
 };
 
 export const [LocationProvider, useLocation] = createContextHook(() => {
@@ -114,7 +114,7 @@ export const [LocationProvider, useLocation] = createContextHook(() => {
     locationError,
     permissionGranted,
     isLoading,
-    defaultLocation: PARIS_DEFAULT,
+    defaultLocation: FRANCE_DEFAULT,
     requestLocation,
     getDistanceFromUser,
     formatDistance,
