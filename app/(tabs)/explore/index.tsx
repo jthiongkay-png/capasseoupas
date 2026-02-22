@@ -73,8 +73,8 @@ export default function ExploreScreen() {
 
   const keyExtractor = useCallback((item: { place: Place; distance: number | null }) => item.place.id, []);
 
-  return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+  const listHeader = useMemo(() => (
+    <View>
       <View style={styles.header}>
         <Text style={styles.title}>Explorer</Text>
         <Text style={styles.subtitle}>{placesWithDistance.length} lieux trouvés{userLocation ? ' · triés par distance' : ''}</Text>
@@ -144,13 +144,19 @@ export default function ExploreScreen() {
           <View style={[styles.closestStatusDot, { backgroundColor: placesWithDistance[0].place.accepted ? colors.accepted : colors.refused }]} />
         </TouchableOpacity>
       )}
+    </View>
+  ), [placesWithDistance, userLocation, search, statusFilter, selectedCategory, colors, styles, formatDistance, handlePlacePress, handleCategoryPress]);
 
+  return (
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <FlatList
         data={placesWithDistance}
         renderItem={renderPlace}
         keyExtractor={keyExtractor}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContent}
+        ListHeaderComponent={listHeader}
+        keyboardShouldPersistTaps="handled"
         ListEmptyComponent={
           <View style={styles.emptyState}>
             <Text style={styles.emptyIcon}>🔍</Text>
