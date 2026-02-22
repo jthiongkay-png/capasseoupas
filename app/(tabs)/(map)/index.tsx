@@ -1,8 +1,8 @@
 import React, { useState, useCallback, useRef, useMemo, useEffect } from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity, Animated, Dimensions, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Platform, TouchableOpacity, Animated, Dimensions, ScrollView, TextInput } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { CheckCircle, XCircle, Locate, Layers, MapPin, UtensilsCrossed, Coffee, Wine, ShoppingBag, Hotel, Fuel, ShoppingCart, Gamepad2, Heart, Bus, MoreHorizontal } from 'lucide-react-native';
+import { CheckCircle, XCircle, Locate, Layers, MapPin, UtensilsCrossed, Coffee, Wine, ShoppingBag, Hotel, Fuel, ShoppingCart, Gamepad2, Heart, Bus, MoreHorizontal, Search } from 'lucide-react-native';
 import { useThemeColors, ThemeColors } from '@/constants/colors';
 import { usePlaces } from '@/providers/PlacesProvider';
 import { Place, PlaceCategory, CATEGORY_LABELS } from '@/types';
@@ -92,6 +92,7 @@ export default function MapScreen() {
   const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
   const [filter, setFilter] = useState<'all' | 'accepted' | 'refused'>('all');
   const [selectedCategory, setSelectedCategory] = useState<PlaceCategory | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const mapRef = useRef<any>(null);
   const slideAnim = useRef(new Animated.Value(200)).current;
 
@@ -100,8 +101,12 @@ export default function MapScreen() {
     if (filter === 'accepted') result = result.filter((p) => p.accepted);
     else if (filter === 'refused') result = result.filter((p) => !p.accepted);
     if (selectedCategory) result = result.filter((p) => p.category === selectedCategory);
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      result = result.filter((p) => p.name.toLowerCase().includes(q) || p.address.toLowerCase().includes(q));
+    }
     return result;
-  }, [places, filter, selectedCategory]);
+  }, [places, filter, selectedCategory, searchQuery]);
 
   const handleCategoryPress = useCallback((cat: PlaceCategory) => {
     setSelectedCategory((prev) => (prev === cat ? null : cat));
@@ -183,10 +188,19 @@ export default function MapScreen() {
     </ScrollView>
   );
 
-  const renderAppTitle = () => (
-    <View style={styles.appTitleRow}>
-      <Text style={styles.appTitleC}>C</Text>
-      <Text style={styles.appTitleRest}>apasseoupas</Text>
+  const renderSearchBar = () => (
+    <View style={styles.searchContainer}>
+      <View style={styles.searchBar}>
+        <Search size={18} color={colors.textTertiary} strokeWidth={1.5} />
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Rechercher un lieu..."
+          placeholderTextColor={colors.textTertiary}
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          testID="map-search-input"
+        />
+      </View>
     </View>
   );
 
@@ -234,7 +248,7 @@ export default function MapScreen() {
     return (
       <View style={styles.container}>
         <View style={[styles.webHeader, { paddingTop: insets.top + 8 }]}>
-          {renderAppTitle()}
+          {renderSearchBar()}
           {renderCategoryFilters()}
           {renderStatusFilters()}
         </View>
@@ -279,7 +293,7 @@ export default function MapScreen() {
       )}
 
       <View style={[styles.topBar, { paddingTop: insets.top + 8 }]}>
-        {renderAppTitle()}
+        {renderSearchBar()}
         {renderCategoryFilters()}
         {renderStatusFilters()}
       </View>
@@ -314,26 +328,34 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingBottom: 4,
-    backgroundColor: colors.background,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    backgroundColor: 'transparent',
   },
-  appTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  searchContainer: {
     marginBottom: 8,
   },
-  appTitleC: {
-    fontSize: 26,
-    fontWeight: '800' as const,
-    color: '#006FCF',
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: 28,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    gap: 10,
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
-  appTitleRest: {
-    fontSize: 26,
-    fontWeight: '800' as const,
+  searchInput: {
+    flex: 1,
+    fontSize: 15,
     color: colors.textPrimary,
+    padding: 0,
   },
   categoryRow: {
     flexDirection: 'row',
@@ -348,11 +370,18 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     position: 'relative' as const,
   },
   categoryIconWrap: {
-    width: 28,
-    height: 28,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 4,
+    backgroundColor: colors.surface,
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
   },
   categoryIconWrapActive: {},
   categoryLabel: {
@@ -396,9 +425,14 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: colors.searchBg,
+    backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
   },
   filterChipActive: {
     backgroundColor: colors.filterActive,
@@ -449,7 +483,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     right: 0,
   },
   webHeader: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingBottom: 8,
     backgroundColor: colors.background,
     borderBottomWidth: 1,

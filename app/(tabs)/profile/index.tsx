@@ -67,7 +67,11 @@ export default function SettingsScreen() {
       contentContainerStyle={styles.contentContainer}
     >
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Paramètres</Text>
+        <View style={styles.appTitleRow}>
+          <Text style={styles.appTitleC}>C</Text>
+          <Text style={styles.appTitleRest}>apasseoupas</Text>
+        </View>
+        <Text style={styles.headerSubtitle}>Paramètres</Text>
       </View>
 
       <View style={styles.statsBar}>
@@ -225,11 +229,26 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     paddingTop: 16,
     paddingBottom: 12,
   },
-  headerTitle: {
-    fontSize: 26,
-    fontWeight: '700' as const,
+  appTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  appTitleC: {
+    fontSize: 28,
+    fontWeight: '800' as const,
+    color: '#006FCF',
+  },
+  appTitleRest: {
+    fontSize: 28,
+    fontWeight: '800' as const,
     color: colors.textPrimary,
-    letterSpacing: -0.5,
+  },
+  headerSubtitle: {
+    fontSize: 15,
+    fontWeight: '400' as const,
+    color: colors.textSecondary,
+    marginTop: 2,
   },
   statsBar: {
     flexDirection: 'row',
