@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "AmexMap",
-    "slug": "amexmap",
+    "name": "Ca passe ou pas",
+    "slug": "capasseoupas",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -15,14 +15,14 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "app.rork.amexmap"
+      "bundleIdentifier": "app.rork.capasseoupas"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "app.rork.amexmap"
+      "package": "app.rork.capasseoupas"
     },
     "web": {
       "favicon": "./assets/images/favicon.png"
