@@ -1,8 +1,8 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { View, Text, StyleSheet, FlatList, TextInput, ScrollView, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TextInput, ScrollView, ActivityIndicator, TouchableOpacity, Keyboard } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Search, Navigation, MapPin } from 'lucide-react-native';
+import { Search, Navigation, MapPin, X } from 'lucide-react-native';
 import { useThemeColors, ThemeColors } from '@/constants/colors';
 import { useFilteredPlaces } from '@/providers/PlacesProvider';
 import { Place, PlaceCategory, CATEGORY_LABELS } from '@/types';
@@ -89,8 +89,17 @@ export default function ExploreScreen() {
             placeholderTextColor={colors.textTertiary}
             value={search}
             onChangeText={setSearch}
+            returnKeyType="search"
+            onSubmitEditing={() => Keyboard.dismiss()}
             testID="search-input"
           />
+          {search.length > 0 && (
+            <TouchableOpacity onPress={() => { setSearch(''); }} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+              <View style={styles.clearButton}>
+                <X size={14} color={colors.textTertiary} strokeWidth={2} />
+              </View>
+            </TouchableOpacity>
+          )}
         </View>
       </View>
 
@@ -214,6 +223,14 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     fontSize: 15,
     color: colors.textPrimary,
     padding: 0,
+  },
+  clearButton: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   statusRow: {
     flexDirection: 'row',

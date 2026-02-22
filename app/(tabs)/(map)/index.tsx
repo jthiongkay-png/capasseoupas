@@ -1,10 +1,10 @@
 import React, { useState, useCallback, useRef, useMemo, useEffect } from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity, Animated, Dimensions, ScrollView, TextInput } from 'react-native';
+import { View, Text, StyleSheet, Platform, TouchableOpacity, Animated, Dimensions, ScrollView, TextInput, Keyboard } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { CheckCircle, XCircle, Locate, Layers, MapPin, UtensilsCrossed, Coffee, Wine, ShoppingBag, Hotel, Fuel, ShoppingCart, Gamepad2, Heart, Bus, MoreHorizontal, Search } from 'lucide-react-native';
+import { CheckCircle, XCircle, Locate, Layers, MapPin, UtensilsCrossed, Coffee, Wine, ShoppingBag, Hotel, Fuel, ShoppingCart, Gamepad2, Heart, Bus, MoreHorizontal, Search, X, ListFilter } from 'lucide-react-native';
 import { useThemeColors, ThemeColors } from '@/constants/colors';
-import { usePlaces } from '@/providers/PlacesProvider';
+import { useFilteredPlaces } from '@/providers/PlacesProvider';
 import { Place, PlaceCategory, CATEGORY_LABELS } from '@/types';
 import FloatingActionButton from '@/components/FloatingActionButton';
 import PlaceCard from '@/components/PlaceCard';
@@ -56,7 +56,12 @@ const DEFAULT_REGION: Region = {
 export default function MapScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { places } = usePlaces();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filter, setFilter] = useState<'all' | 'accepted' | 'refused'>('all');
+  const [selectedCategory, setSelectedCategory] = useState<PlaceCategory | null>(null);
+
+  const allPlaces = useFilteredPlaces('', null, 'all');
+  const filteredPlaces = useFilteredPlaces(searchQuery, selectedCategory, filter);
   const { userLocation, isLoading: locationLoading, requestLocation } = useLocation();
   const colors = useThemeColors();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -90,23 +95,9 @@ export default function MapScreen() {
     }
   }, [userLocation]);
   const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
-  const [filter, setFilter] = useState<'all' | 'accepted' | 'refused'>('all');
-  const [selectedCategory, setSelectedCategory] = useState<PlaceCategory | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
   const mapRef = useRef<any>(null);
   const slideAnim = useRef(new Animated.Value(200)).current;
-
-  const filteredPlaces = useMemo(() => {
-    let result = places;
-    if (filter === 'accepted') result = result.filter((p) => p.accepted);
-    else if (filter === 'refused') result = result.filter((p) => !p.accepted);
-    if (selectedCategory) result = result.filter((p) => p.category === selectedCategory);
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase().trim();
-      result = result.filter((p) => p.name.toLowerCase().includes(q) || p.address.toLowerCase().includes(q));
-    }
-    return result;
-  }, [places, filter, selectedCategory, searchQuery]);
+  const searchInputRef = useRef<TextInput>(null);
 
   const handleCategoryPress = useCallback((cat: PlaceCategory) => {
     setSelectedCategory((prev) => (prev === cat ? null : cat));
@@ -122,6 +113,7 @@ export default function MapScreen() {
   }, [slideAnim]);
 
   const handleMapPress = useCallback(() => {
+    Keyboard.dismiss();
     if (selectedPlace) {
       Animated.timing(slideAnim, {
         toValue: 200,
@@ -130,6 +122,11 @@ export default function MapScreen() {
       }).start(() => setSelectedPlace(null));
     }
   }, [selectedPlace, slideAnim]);
+
+  const handleClearSearch = useCallback(() => {
+    setSearchQuery('');
+    searchInputRef.current?.blur();
+  }, []);
 
   const handlePlacePress = useCallback((place: Place) => {
     router.push(`/place/${place.id}` as any);
@@ -156,8 +153,8 @@ export default function MapScreen() {
     }
   }, [userLocation, requestLocation]);
 
-  const acceptedCount = useMemo(() => places.filter((p) => p.accepted).length, [places]);
-  const refusedCount = useMemo(() => places.filter((p) => !p.accepted).length, [places]);
+  const acceptedCount = useMemo(() => allPlaces.filter((p) => p.accepted).length, [allPlaces]);
+  const refusedCount = useMemo(() => allPlaces.filter((p) => !p.accepted).length, [allPlaces]);
 
   const renderCategoryFilters = () => (
     <ScrollView
@@ -193,13 +190,23 @@ export default function MapScreen() {
       <View style={styles.searchBar}>
         <Search size={18} color={colors.textTertiary} strokeWidth={1.5} />
         <TextInput
+          ref={searchInputRef}
           style={styles.searchInput}
-          placeholder="Rechercher un lieu..."
+          placeholder="Rechercher un lieu ou adresse..."
           placeholderTextColor={colors.textTertiary}
           value={searchQuery}
           onChangeText={setSearchQuery}
+          returnKeyType="search"
+          onSubmitEditing={() => Keyboard.dismiss()}
           testID="map-search-input"
         />
+        {searchQuery.length > 0 && (
+          <TouchableOpacity onPress={handleClearSearch} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+            <View style={styles.clearButton}>
+              <X size={14} color={colors.textTertiary} strokeWidth={2} />
+            </View>
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   );
@@ -208,22 +215,23 @@ export default function MapScreen() {
     <View style={styles.filterRow}>
       <TouchableOpacity
         style={styles.filterChipWrap}
-        onPress={() => setFilter('all')}
+        onPress={() => { setFilter('all'); Keyboard.dismiss(); }}
         activeOpacity={0.7}
       >
         <View style={[styles.filterChip, filter === 'all' && styles.filterChipActive]}>
+          <ListFilter size={13} color={filter === 'all' ? '#FFFFFF' : colors.textSecondary} strokeWidth={2} />
           <Text style={[styles.filterChipText, filter === 'all' && styles.filterChipTextActive]}>
-            Tous ({places.length})
+            Tous ({allPlaces.length})
           </Text>
         </View>
       </TouchableOpacity>
       <TouchableOpacity
         style={styles.filterChipWrap}
-        onPress={() => setFilter('accepted')}
+        onPress={() => { setFilter('accepted'); Keyboard.dismiss(); }}
         activeOpacity={0.7}
       >
         <View style={[styles.filterChip, filter === 'accepted' && styles.filterChipAccepted]}>
-          <View style={[styles.filterDot, { backgroundColor: colors.accepted }]} />
+          <CheckCircle size={13} color={filter === 'accepted' ? '#FFFFFF' : colors.accepted} strokeWidth={2} />
           <Text style={[styles.filterChipText, filter === 'accepted' && styles.filterChipTextActive]}>
             Accepté ({acceptedCount})
           </Text>
@@ -231,11 +239,11 @@ export default function MapScreen() {
       </TouchableOpacity>
       <TouchableOpacity
         style={styles.filterChipWrap}
-        onPress={() => setFilter('refused')}
+        onPress={() => { setFilter('refused'); Keyboard.dismiss(); }}
         activeOpacity={0.7}
       >
         <View style={[styles.filterChip, filter === 'refused' && styles.filterChipRefused]}>
-          <View style={[styles.filterDot, { backgroundColor: colors.refused }]} />
+          <XCircle size={13} color={filter === 'refused' ? '#FFFFFF' : colors.refused} strokeWidth={2} />
           <Text style={[styles.filterChipText, filter === 'refused' && styles.filterChipTextActive]}>
             Refusé ({refusedCount})
           </Text>
@@ -409,10 +417,13 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     paddingTop: 8,
     paddingBottom: 4,
   },
-  filterDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+  clearButton: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   filterChipWrap: {
     borderRadius: 20,

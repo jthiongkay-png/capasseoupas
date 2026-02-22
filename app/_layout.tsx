@@ -21,7 +21,7 @@ function RootLayoutNav() {
     <Stack
       screenOptions={{
         headerBackTitle: 'Retour',
-        animation: Platform.OS === 'web' ? 'none' : 'ios_from_right',
+        animation: Platform.OS === 'web' ? 'none' : 'fade',
         contentStyle: { backgroundColor: colors.background },
         headerStyle: { backgroundColor: colors.background },
         headerTintColor: colors.textPrimary,
@@ -33,28 +33,28 @@ function RootLayoutNav() {
         options={{
           presentation: 'modal',
           headerShown: false,
-          animation: Platform.OS === 'web' ? 'none' : 'slide_from_bottom',
+          animation: Platform.OS === 'web' ? 'none' : 'fade_from_bottom',
         }}
       />
       <Stack.Screen
         name="place/[id]"
         options={{
           headerShown: false,
-          animation: Platform.OS === 'web' ? 'none' : 'ios_from_right',
+          animation: Platform.OS === 'web' ? 'none' : 'fade',
         }}
       />
       <Stack.Screen
         name="terms"
         options={{
           headerShown: false,
-          animation: Platform.OS === 'web' ? 'none' : 'ios_from_right',
+          animation: Platform.OS === 'web' ? 'none' : 'fade',
         }}
       />
       <Stack.Screen
         name="privacy"
         options={{
           headerShown: false,
-          animation: Platform.OS === 'web' ? 'none' : 'ios_from_right',
+          animation: Platform.OS === 'web' ? 'none' : 'fade',
         }}
       />
     </Stack>
