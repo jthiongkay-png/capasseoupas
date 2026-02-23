@@ -168,17 +168,14 @@ export default function MapScreen() {
         return (
           <TouchableOpacity
             key={cat}
-            style={styles.categoryItem}
+            style={[styles.categoryChip, isSelected && styles.categoryChipActive]}
             onPress={() => handleCategoryPress(cat)}
             activeOpacity={0.7}
           >
-            <View style={[styles.categoryIconWrap, isSelected && styles.categoryIconWrapActive]}>
-              <Icon size={20} color={isSelected ? colors.primary : colors.textSecondary} strokeWidth={isSelected ? 2 : 1.5} />
-            </View>
+            <Icon size={14} color={isSelected ? '#FFFFFF' : colors.textSecondary} strokeWidth={isSelected ? 2.2 : 1.5} />
             <Text style={[styles.categoryLabel, isSelected && styles.categoryLabelActive]}>
               {CATEGORY_LABELS[cat]}
             </Text>
-            {isSelected && <View style={styles.categoryUnderline} />}
           </TouchableOpacity>
         );
       })}
@@ -315,48 +312,37 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   categoryRow: {
     flexDirection: 'row',
     paddingRight: 20,
-    gap: 20,
+    gap: 8,
     paddingBottom: 2,
   },
-  categoryItem: {
+  categoryChip: {
+    flexDirection: 'row',
     alignItems: 'center',
-    paddingBottom: 8,
-    minWidth: 56,
-    position: 'relative' as const,
-  },
-  categoryIconWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 4,
+    gap: 5,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
     backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
     shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.08,
     shadowRadius: 4,
     elevation: 2,
   },
-  categoryIconWrapActive: {},
+  categoryChipActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
   categoryLabel: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: '500' as const,
     color: colors.textSecondary,
-    textAlign: 'center' as const,
   },
   categoryLabelActive: {
-    color: colors.primary,
+    color: '#FFFFFF',
     fontWeight: '600' as const,
-  },
-  categoryUnderline: {
-    position: 'absolute',
-    bottom: 0,
-    left: 8,
-    right: 8,
-    height: 2,
-    backgroundColor: colors.primary,
-    borderRadius: 1,
   },
   filterRow: {
     flexDirection: 'row',
