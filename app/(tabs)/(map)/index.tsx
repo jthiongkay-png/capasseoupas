@@ -229,7 +229,7 @@ export default function MapScreen() {
   if (Platform.OS === 'web') {
     return (
       <View style={styles.container}>
-        <View style={[styles.webHeader, { paddingTop: insets.top + 8 }]}>
+        <View style={[styles.webHeader, { paddingTop: insets.top + 20 }]}>
           {renderCategoryFilters()}
           {renderStatusFilters()}
         </View>
@@ -273,7 +273,7 @@ export default function MapScreen() {
         </NativeMapView>
       )}
 
-      <View style={[styles.topBar, { paddingTop: insets.top + 8 }]}>
+      <View style={[styles.topBar, { paddingTop: insets.top + 20 }]}>
         {renderCategoryFilters()}
         {renderStatusFilters()}
       </View>
