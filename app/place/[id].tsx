@@ -2,7 +2,7 @@ import React, { useMemo, useCallback, useRef, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Animated, Alert, Image, Dimensions, Platform } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ArrowLeft, CheckCircle, XCircle, MapPin, Clock, Users, TrendingUp, ThumbsUp, ThumbsDown, Trash2, Phone, Globe, Navigation, Share2, AlertTriangle } from 'lucide-react-native';
+import { ArrowLeft, CheckCircle, XCircle, MapPin, Clock, Users, TrendingUp, ThumbsUp, ThumbsDown, Trash2, Phone, Globe, Navigation, Share2, AlertTriangle, Info } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { useThemeColors, ThemeColors } from '@/constants/colors';
 import { usePlaces } from '@/providers/PlacesProvider';
@@ -322,6 +322,13 @@ export default function PlaceDetailScreen() {
           <Trash2 size={16} color="#FF453A" strokeWidth={1.5} />
           <Text style={styles.deleteButtonText}>Supprimer ce lieu</Text>
         </TouchableOpacity>
+
+        <View style={styles.disclaimerContainer}>
+          <Info size={14} color={colors.textTertiary} strokeWidth={1.5} />
+          <Text style={styles.disclaimerText}>
+            Ça Passe ou Pas ne peut être tenu responsable des informations enregistrées par les utilisateurs sur l'application. Les données sont fournies à titre indicatif et peuvent ne pas refléter la situation actuelle de l'établissement.
+          </Text>
+        </View>
 
         <View style={{ height: insets.bottom + 40 }} />
       </Animated.ScrollView>
@@ -715,5 +722,23 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     fontSize: 14,
     fontWeight: '500' as const,
     color: '#FF453A',
+  },
+  disclaimerContainer: {
+    flexDirection: 'row',
+    gap: 10,
+    marginHorizontal: 16,
+    marginTop: 24,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    backgroundColor: colors.searchBg,
+    borderRadius: 12,
+    alignItems: 'flex-start',
+  },
+  disclaimerText: {
+    flex: 1,
+    fontSize: 11,
+    fontWeight: '400' as const,
+    color: colors.textTertiary,
+    lineHeight: 16,
   },
 });

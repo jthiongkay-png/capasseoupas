@@ -1,10 +1,11 @@
 import React, { useState, useCallback, useRef, useMemo, useEffect } from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity, Animated, Dimensions, ScrollView, TextInput, Keyboard } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
+import { View, Text, StyleSheet, Platform, TouchableOpacity, Animated, Dimensions, ScrollView, Keyboard } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { CheckCircle, XCircle, Locate, Layers, MapPin, UtensilsCrossed, Coffee, Wine, ShoppingBag, Hotel, Fuel, ShoppingCart, Gamepad2, Heart, Bus, MoreHorizontal, Search, X, ListFilter } from 'lucide-react-native';
+import { CheckCircle, XCircle, Locate, MapPin, UtensilsCrossed, Coffee, Wine, ShoppingBag, Hotel, Fuel, ShoppingCart, Gamepad2, Heart, Bus, MoreHorizontal, ListFilter } from 'lucide-react-native';
 import { useThemeColors, ThemeColors } from '@/constants/colors';
-import { useFilteredPlaces } from '@/providers/PlacesProvider';
+import { useFilteredPlaces, usePlaces } from '@/providers/PlacesProvider';
 import { Place, PlaceCategory, CATEGORY_LABELS } from '@/types';
 import FloatingActionButton from '@/components/FloatingActionButton';
 import PlaceCard from '@/components/PlaceCard';
@@ -56,12 +57,12 @@ const DEFAULT_REGION: Region = {
 export default function MapScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState<'all' | 'accepted' | 'refused'>('all');
   const [selectedCategory, setSelectedCategory] = useState<PlaceCategory | null>(null);
 
   const allPlaces = useFilteredPlaces('', null, 'all');
-  const filteredPlaces = useFilteredPlaces(searchQuery, selectedCategory, filter);
+  const filteredPlaces = useFilteredPlaces('', selectedCategory, filter);
+  const { places } = usePlaces();
   const { userLocation, isLoading: locationLoading, requestLocation } = useLocation();
   const colors = useThemeColors();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -94,17 +95,21 @@ export default function MapScreen() {
       );
     }
   }, [userLocation]);
-  const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
+  const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
+
+  const selectedPlace = useMemo(() => {
+    if (!selectedPlaceId) return null;
+    return places.find((p) => p.id === selectedPlaceId) ?? null;
+  }, [selectedPlaceId, places]);
   const mapRef = useRef<any>(null);
   const slideAnim = useRef(new Animated.Value(200)).current;
-  const searchInputRef = useRef<TextInput>(null);
 
   const handleCategoryPress = useCallback((cat: PlaceCategory) => {
     setSelectedCategory((prev) => (prev === cat ? null : cat));
   }, []);
 
   const handleMarkerPress = useCallback((place: Place) => {
-    setSelectedPlace(place);
+    setSelectedPlaceId(place.id);
     Animated.spring(slideAnim, {
       toValue: 0,
       friction: 8,
@@ -114,19 +119,14 @@ export default function MapScreen() {
 
   const handleMapPress = useCallback(() => {
     Keyboard.dismiss();
-    if (selectedPlace) {
+    if (selectedPlaceId) {
       Animated.timing(slideAnim, {
         toValue: 200,
         duration: 200,
         useNativeDriver: true,
-      }).start(() => setSelectedPlace(null));
+      }).start(() => setSelectedPlaceId(null));
     }
-  }, [selectedPlace, slideAnim]);
-
-  const handleClearSearch = useCallback(() => {
-    setSearchQuery('');
-    searchInputRef.current?.blur();
-  }, []);
+  }, [selectedPlaceId, slideAnim]);
 
   const handlePlacePress = useCallback((place: Place) => {
     router.push(`/place/${place.id}` as any);
@@ -185,32 +185,6 @@ export default function MapScreen() {
     </ScrollView>
   );
 
-  const renderSearchBar = () => (
-    <View style={styles.searchContainer}>
-      <View style={styles.searchBar}>
-        <Search size={18} color={colors.textTertiary} strokeWidth={1.5} />
-        <TextInput
-          ref={searchInputRef}
-          style={styles.searchInput}
-          placeholder="Rechercher un lieu ou adresse..."
-          placeholderTextColor={colors.textTertiary}
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          returnKeyType="search"
-          onSubmitEditing={() => Keyboard.dismiss()}
-          testID="map-search-input"
-        />
-        {searchQuery.length > 0 && (
-          <TouchableOpacity onPress={handleClearSearch} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-            <View style={styles.clearButton}>
-              <X size={14} color={colors.textTertiary} strokeWidth={2} />
-            </View>
-          </TouchableOpacity>
-        )}
-      </View>
-    </View>
-  );
-
   const renderStatusFilters = () => (
     <View style={styles.filterRow}>
       <TouchableOpacity
@@ -256,7 +230,6 @@ export default function MapScreen() {
     return (
       <View style={styles.container}>
         <View style={[styles.webHeader, { paddingTop: insets.top + 8 }]}>
-          {renderSearchBar()}
           {renderCategoryFilters()}
           {renderStatusFilters()}
         </View>
@@ -301,7 +274,6 @@ export default function MapScreen() {
       )}
 
       <View style={[styles.topBar, { paddingTop: insets.top + 8 }]}>
-        {renderSearchBar()}
         {renderCategoryFilters()}
         {renderStatusFilters()}
       </View>
@@ -339,31 +311,6 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 4,
     backgroundColor: 'transparent',
-  },
-  searchContainer: {
-    marginBottom: 8,
-  },
-  searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderRadius: 28,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    gap: 10,
-    shadowColor: colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    elevation: 4,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 15,
-    color: colors.textPrimary,
-    padding: 0,
   },
   categoryRow: {
     flexDirection: 'row',
@@ -416,14 +363,6 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     gap: 8,
     paddingTop: 8,
     paddingBottom: 4,
-  },
-  clearButton: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   filterChipWrap: {
     borderRadius: 20,
