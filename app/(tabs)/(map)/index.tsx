@@ -264,7 +264,6 @@ export default function MapScreen() {
               coordinate={{ latitude: place.latitude, longitude: place.longitude }}
               onPress={() => handleMarkerPress(place)}
               pinColor={place.accepted ? colors.accepted : colors.refused}
-              title={place.name}
             />
           ))}
         </NativeMapView>
