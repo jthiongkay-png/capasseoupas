@@ -7,6 +7,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { PlacesProvider } from '@/providers/PlacesProvider';
 import { UserProvider } from '@/providers/UserProvider';
 import { LocationProvider } from '@/providers/LocationProvider';
+import { AuthProvider } from '@/providers/AuthProvider';
 import { useThemeColors } from '@/constants/colors';
 
 SplashScreen.preventAutoHideAsync();
@@ -43,6 +44,22 @@ function RootLayoutNav() {
         }}
       />
       <Stack.Screen
+        name="login"
+        options={{
+          presentation: 'modal',
+          headerShown: false,
+          animation: Platform.OS === 'web' ? 'none' : 'fade_from_bottom',
+        }}
+      />
+      <Stack.Screen
+        name="setup-username"
+        options={{
+          headerShown: false,
+          animation: Platform.OS === 'web' ? 'none' : 'fade',
+          gestureEnabled: false,
+        }}
+      />
+      <Stack.Screen
         name="terms"
         options={{
           headerShown: false,
@@ -68,13 +85,15 @@ export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
       <GestureHandlerRootView style={{ flex: 1 }}>
-        <LocationProvider>
-          <PlacesProvider>
-            <UserProvider>
-              <RootLayoutNav />
-            </UserProvider>
-          </PlacesProvider>
-        </LocationProvider>
+        <AuthProvider>
+          <LocationProvider>
+            <PlacesProvider>
+              <UserProvider>
+                <RootLayoutNav />
+              </UserProvider>
+            </PlacesProvider>
+          </LocationProvider>
+        </AuthProvider>
       </GestureHandlerRootView>
     </QueryClientProvider>
   );

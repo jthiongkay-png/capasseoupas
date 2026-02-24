@@ -4,7 +4,7 @@ import { Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeColors, ThemeColors } from '@/constants/colors';
 
-const LAST_UPDATED = '20 février 2026';
+const LAST_UPDATED = '24 février 2026';
 
 export default function TermsScreen() {
   const insets = useSafeAreaInsets();
@@ -41,12 +41,20 @@ export default function TermsScreen() {
           Capasseoupas est une application communautaire gratuite permettant aux utilisateurs de signaler et consulter les commerces et établissements en France qui acceptent ou refusent les cartes American Express (Amex). L'Application n'est pas affiliée à, ni sponsorisée par American Express Company ou l'une de ses filiales.
         </Text>
 
-        <Text style={styles.heading}>2. Accès à l'Application</Text>
+        <Text style={styles.heading}>2. Inscription et compte utilisateur</Text>
         <Text style={styles.body}>
-          L'Application est accessible gratuitement à toute personne disposant d'un appareil compatible. L'Éditeur se réserve le droit de suspendre, modifier ou interrompre tout ou partie de l'Application sans préavis et sans que cela ne puisse donner lieu à une quelconque indemnisation.
+          Pour signaler un commerce, l'utilisateur doit créer un compte en s'inscrivant via l'une des méthodes suivantes : authentification Google, authentification Apple, ou inscription par adresse e-mail. L'utilisateur doit ensuite choisir un nom d'utilisateur (pseudo) qui sera affiché publiquement avec ses signalements.
+        </Text>
+        <Text style={styles.body}>
+          L'utilisateur s'engage à fournir des informations exactes lors de son inscription et à ne pas usurper l'identité d'un tiers. L'Éditeur se réserve le droit de suspendre ou supprimer tout compte en cas de violation des présentes CGU.
         </Text>
 
-        <Text style={styles.heading}>3. Contributions des utilisateurs</Text>
+        <Text style={styles.heading}>3. Accès à l'Application</Text>
+        <Text style={styles.body}>
+          L'Application est accessible gratuitement à toute personne disposant d'un appareil compatible. La consultation de la carte et des lieux est accessible sans compte. La soumission de signalements nécessite la création d'un compte. L'Éditeur se réserve le droit de suspendre, modifier ou interrompre tout ou partie de l'Application sans préavis et sans que cela ne puisse donner lieu à une quelconque indemnisation.
+        </Text>
+
+        <Text style={styles.heading}>4. Contributions des utilisateurs</Text>
         <Text style={styles.body}>
           Les utilisateurs peuvent signaler des établissements et indiquer si leur carte Amex y a été acceptée ou refusée. En soumettant un signalement, vous déclarez que :
         </Text>
@@ -54,7 +62,7 @@ export default function TermsScreen() {
         <Text style={styles.bullet}>• Vous n'utilisez pas l'Application à des fins de dénigrement, diffamation ou concurrence déloyale.</Text>
         <Text style={styles.bullet}>• Vous accordez à l'Éditeur une licence non exclusive, gratuite et mondiale d'utiliser, reproduire et afficher votre contribution dans le cadre de l'Application.</Text>
 
-        <Text style={styles.heading}>4. Responsabilités de l'utilisateur</Text>
+        <Text style={styles.heading}>5. Responsabilités de l'utilisateur</Text>
         <Text style={styles.body}>
           L'utilisateur s'engage à utiliser l'Application conformément à sa finalité et aux lois en vigueur, notamment :
         </Text>
@@ -62,7 +70,7 @@ export default function TermsScreen() {
         <Text style={styles.bullet}>• Ne pas tenter de porter atteinte au fonctionnement de l'Application (hacking, scraping, etc.).</Text>
         <Text style={styles.bullet}>• Ne pas collecter les données d'autres utilisateurs sans leur consentement.</Text>
 
-        <Text style={styles.heading}>5. Limitation de responsabilité</Text>
+        <Text style={styles.heading}>6. Limitation de responsabilité</Text>
         <Text style={styles.body}>
           Les informations affichées dans l'Application proviennent exclusivement des signalements de la communauté. L'Éditeur ne garantit pas l'exactitude, l'exhaustivité ou l'actualité de ces informations. En aucun cas l'Éditeur ne pourra être tenu responsable :
         </Text>
@@ -70,37 +78,43 @@ export default function TermsScreen() {
         <Text style={styles.bullet}>• Du refus d'un moyen de paiement dans un établissement signalé comme l'acceptant.</Text>
         <Text style={styles.bullet}>• De tout dommage direct ou indirect résultant de l'utilisation de l'Application.</Text>
 
-        <Text style={styles.heading}>6. Propriété intellectuelle</Text>
+        <Text style={styles.heading}>7. Propriété intellectuelle</Text>
         <Text style={styles.body}>
           L'ensemble des éléments de l'Application (design, textes, logos, icônes, code source) sont protégés par le droit de la propriété intellectuelle. Toute reproduction, représentation ou exploitation non autorisée est interdite conformément aux articles L.335-2 et suivants du Code de la propriété intellectuelle.
         </Text>
 
-        <Text style={styles.heading}>7. Données personnelles</Text>
+        <Text style={styles.heading}>8. Données personnelles et publicité</Text>
         <Text style={styles.body}>
-          Le traitement des données personnelles est régi par notre Politique de Confidentialité, conformément au Règlement Général sur la Protection des Données (RGPD - Règlement UE 2016/679) et à la loi Informatique et Libertés du 6 janvier 1978 modifiée. Pour plus de détails, veuillez consulter notre Politique de Confidentialité accessible depuis l'Application.
+          Le traitement des données personnelles est régi par notre Politique de Confidentialité, conformément au Règlement Général sur la Protection des Données (RGPD - Règlement UE 2016/679) et à la loi Informatique et Libertés du 6 janvier 1978 modifiée.
+        </Text>
+        <Text style={styles.body}>
+          L'Application utilise Google AdMob pour afficher des publicités. En utilisant l'Application, vous consentez à la collecte et à l'utilisation de certaines données (identifiants publicitaires, données d'utilisation, données techniques) par Google AdMob à des fins de personnalisation publicitaire. Vous pouvez gérer vos préférences publicitaires dans les paramètres de votre appareil.
+        </Text>
+        <Text style={styles.body}>
+          Pour plus de détails, veuillez consulter notre Politique de Confidentialité accessible depuis l'Application.
         </Text>
 
-        <Text style={styles.heading}>8. Modération du contenu</Text>
+        <Text style={styles.heading}>9. Modération du contenu</Text>
         <Text style={styles.body}>
           L'Éditeur se réserve le droit de supprimer, sans préavis, tout signalement ou contenu jugé inapproprié, inexact, trompeur ou contraire aux présentes CGU. Les utilisateurs peuvent signaler un contenu inapproprié via la fonction de contact de l'Application.
         </Text>
 
-        <Text style={styles.heading}>9. Modification des CGU</Text>
+        <Text style={styles.heading}>10. Modification des CGU</Text>
         <Text style={styles.body}>
           L'Éditeur se réserve le droit de modifier les présentes CGU à tout moment. Les utilisateurs seront informés des modifications substantielles via l'Application. La poursuite de l'utilisation de l'Application après modification vaut acceptation des nouvelles CGU.
         </Text>
 
-        <Text style={styles.heading}>10. Droit applicable et juridiction</Text>
+        <Text style={styles.heading}>11. Droit applicable et juridiction</Text>
         <Text style={styles.body}>
           Les présentes CGU sont régies par le droit français. Conformément aux articles L.611-1 et suivants du Code de la consommation, en cas de litige, le consommateur peut recourir gratuitement à un médiateur de la consommation. À défaut de résolution amiable, tout litige sera soumis aux tribunaux compétents de Paris, France.
         </Text>
 
-        <Text style={styles.heading}>11. Droit de rétractation</Text>
+        <Text style={styles.heading}>12. Droit de rétractation</Text>
         <Text style={styles.body}>
           Conformément à l'article L.221-28 du Code de la consommation, l'Application étant un service numérique gratuit accessible immédiatement, le droit de rétractation ne s'applique pas.
         </Text>
 
-        <Text style={styles.heading}>12. Contact</Text>
+        <Text style={styles.heading}>13. Contact</Text>
         <Text style={styles.body}>
           Pour toute question relative aux présentes CGU, vous pouvez nous contacter à l'adresse suivante : contact@capasseoupas.app
         </Text>

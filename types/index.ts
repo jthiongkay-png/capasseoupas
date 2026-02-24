@@ -29,6 +29,18 @@ export interface User {
   level: string;
 }
 
+export type AuthMethod = 'google' | 'apple' | 'email';
+
+export interface AuthUser {
+  id: string;
+  email: string;
+  username: string;
+  authMethod: AuthMethod;
+  createdAt: string;
+  reportsCount: number;
+  level: string;
+}
+
 export type PlaceCategory =
   | 'restaurant'
   | 'cafe'

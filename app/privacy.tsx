@@ -4,7 +4,7 @@ import { Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeColors, ThemeColors } from '@/constants/colors';
 
-const LAST_UPDATED = '20 février 2026';
+const LAST_UPDATED = '24 février 2026';
 
 export default function PrivacyScreen() {
   const insets = useSafeAreaInsets();
@@ -43,14 +43,16 @@ export default function PrivacyScreen() {
           Dans le cadre de l'utilisation de l'Application, nous pouvons collecter les données suivantes :
         </Text>
         <Text style={styles.subheading}>2.1 Données fournies par l'utilisateur</Text>
+        <Text style={styles.bullet}>• Données d'inscription : adresse e-mail, nom d'utilisateur choisi, méthode d'authentification (Google, Apple ou e-mail).</Text>
         <Text style={styles.bullet}>• Signalements de lieux (nom du commerce, adresse, catégorie, statut d'acceptation Amex).</Text>
         <Text style={styles.bullet}>• Commentaires optionnels associés aux signalements.</Text>
         <Text style={styles.subheading}>2.2 Données collectées automatiquement</Text>
-        <Text style={styles.bullet}>• Identifiant anonyme de l'appareil (pour distinguer les contributions).</Text>
+        <Text style={styles.bullet}>• Identifiant unique de l'utilisateur (généré lors de la création du compte).</Text>
         <Text style={styles.bullet}>• Données de géolocalisation (uniquement lorsque vous autorisez l'accès à votre position, pour afficher la carte et les lieux à proximité).</Text>
         <Text style={styles.bullet}>• Données techniques (type d'appareil, système d'exploitation, version de l'Application).</Text>
+        <Text style={styles.bullet}>• Identifiants publicitaires (IDFA/GAID) pour la personnalisation des publicités via Google AdMob.</Text>
+        <Text style={styles.bullet}>• Données d'utilisation et d'interaction avec l'Application (pages consultées, actions effectuées).</Text>
         <Text style={styles.subheading}>2.3 Données que nous ne collectons PAS</Text>
-        <Text style={styles.bullet}>• Nom, prénom, adresse e-mail (sauf si vous nous contactez spontanément).</Text>
         <Text style={styles.bullet}>• Données bancaires ou informations relatives à vos cartes de paiement.</Text>
         <Text style={styles.bullet}>• Données sensibles au sens de l'article 9 du RGPD.</Text>
 
@@ -62,6 +64,14 @@ export default function PrivacyScreen() {
           <View style={styles.tableRow}>
             <Text style={[styles.tableCell, styles.tableCellHeader]}>Finalité</Text>
             <Text style={[styles.tableCell, styles.tableCellHeader]}>Base légale</Text>
+          </View>
+          <View style={styles.tableRow}>
+            <Text style={styles.tableCell}>Création et gestion du compte utilisateur</Text>
+            <Text style={styles.tableCell}>Exécution du contrat (Art. 6.1.b RGPD)</Text>
+          </View>
+          <View style={styles.tableRow}>
+            <Text style={styles.tableCell}>Authentification via Google, Apple ou e-mail</Text>
+            <Text style={styles.tableCell}>Exécution du contrat (Art. 6.1.b RGPD)</Text>
           </View>
           <View style={styles.tableRow}>
             <Text style={styles.tableCell}>Affichage des lieux sur la carte</Text>
@@ -76,6 +86,10 @@ export default function PrivacyScreen() {
             <Text style={styles.tableCell}>Consentement (Art. 6.1.a RGPD)</Text>
           </View>
           <View style={styles.tableRow}>
+            <Text style={styles.tableCell}>Affichage de publicités personnalisées (Google AdMob)</Text>
+            <Text style={styles.tableCell}>Consentement (Art. 6.1.a RGPD)</Text>
+          </View>
+          <View style={styles.tableRow}>
             <Text style={styles.tableCell}>Amélioration de l'Application et correction de bugs</Text>
             <Text style={styles.tableCell}>Intérêt légitime (Art. 6.1.f RGPD)</Text>
           </View>
@@ -86,24 +100,38 @@ export default function PrivacyScreen() {
           Les signalements sont conservés tant qu'ils sont pertinents pour la communauté. Les données techniques sont conservées pour une durée maximale de 12 mois. Vous pouvez demander la suppression de vos contributions à tout moment en nous contactant.
         </Text>
 
-        <Text style={styles.heading}>5. Partage des données</Text>
+        <Text style={styles.heading}>5. Publicités et partenaires publicitaires</Text>
         <Text style={styles.body}>
-          Nous ne vendons, ne louons et ne partageons pas vos données personnelles avec des tiers à des fins commerciales. Vos données peuvent être partagées uniquement dans les cas suivants :
+          L'Application utilise Google AdMob pour afficher des publicités. Google AdMob peut collecter et utiliser certaines données pour personnaliser les publicités affichées, notamment :
         </Text>
-        <Text style={styles.bullet}>• Avec des prestataires techniques nécessaires au fonctionnement de l'Application (hébergement, services cartographiques), agissant en tant que sous-traitants conformément à l'article 28 du RGPD.</Text>
+        <Text style={styles.bullet}>• Identifiants publicitaires de votre appareil (IDFA sur iOS, GAID sur Android).</Text>
+        <Text style={styles.bullet}>• Données d'utilisation de l'Application (interactions, pages consultées).</Text>
+        <Text style={styles.bullet}>• Données techniques (type d'appareil, système d'exploitation, adresse IP).</Text>
+        <Text style={styles.bullet}>• Données de localisation approximative.</Text>
+        <Text style={styles.body}>
+          Vous pouvez gérer vos préférences publicitaires dans les paramètres de votre appareil ou en désactivant la personnalisation des annonces. Pour plus d'informations sur les pratiques de Google en matière de confidentialité, consultez : https://policies.google.com/privacy
+        </Text>
+
+        <Text style={styles.heading}>6. Partage des données</Text>
+        <Text style={styles.body}>
+          Vos données peuvent être partagées dans les cas suivants :
+        </Text>
+        <Text style={styles.bullet}>• Avec Google AdMob pour l'affichage de publicités personnalisées, conformément à votre consentement.</Text>
+        <Text style={styles.bullet}>• Avec des prestataires techniques nécessaires au fonctionnement de l'Application (hébergement, services cartographiques, services d'authentification), agissant en tant que sous-traitants conformément à l'article 28 du RGPD.</Text>
+        <Text style={styles.bullet}>• Avec Google et Apple dans le cadre de l'authentification via leurs services respectifs.</Text>
         <Text style={styles.bullet}>• Si la loi l'exige, sur demande d'une autorité judiciaire ou administrative compétente.</Text>
 
-        <Text style={styles.heading}>6. Transferts de données hors UE</Text>
+        <Text style={styles.heading}>7. Transferts de données hors UE</Text>
         <Text style={styles.body}>
           Certains de nos prestataires techniques (notamment les services cartographiques Google Maps) peuvent traiter des données en dehors de l'Union européenne. Dans ce cas, des garanties appropriées sont mises en place conformément au chapitre V du RGPD, notamment les clauses contractuelles types adoptées par la Commission européenne ou le cadre de protection des données UE-États-Unis (EU-US Data Privacy Framework).
         </Text>
 
-        <Text style={styles.heading}>7. Sécurité des données</Text>
+        <Text style={styles.heading}>8. Sécurité des données</Text>
         <Text style={styles.body}>
           Nous mettons en œuvre des mesures techniques et organisationnelles appropriées pour protéger vos données contre tout accès non autorisé, altération, divulgation ou destruction, conformément à l'article 32 du RGPD. Cela inclut le chiffrement des données en transit et la limitation de l'accès aux données au personnel autorisé.
         </Text>
 
-        <Text style={styles.heading}>8. Vos droits</Text>
+        <Text style={styles.heading}>9. Vos droits</Text>
         <Text style={styles.body}>
           Conformément au RGPD et à la loi Informatique et Libertés, vous disposez des droits suivants :
         </Text>
@@ -118,29 +146,32 @@ export default function PrivacyScreen() {
           Pour exercer ces droits, contactez-nous à : contact@capasseoupas.app. Nous répondrons à votre demande dans un délai de 30 jours conformément au RGPD.
         </Text>
 
-        <Text style={styles.heading}>9. Réclamation auprès de la CNIL</Text>
+        <Text style={styles.heading}>10. Réclamation auprès de la CNIL</Text>
         <Text style={styles.body}>
           Si vous estimez que le traitement de vos données personnelles constitue une violation du RGPD, vous avez le droit d'introduire une réclamation auprès de la Commission Nationale de l'Informatique et des Libertés (CNIL) :
         </Text>
         <Text style={styles.bullet}>• En ligne : www.cnil.fr</Text>
         <Text style={styles.bullet}>• Par courrier : CNIL, 3 Place de Fontenoy, TSA 80715, 75334 Paris Cedex 07, France</Text>
 
-        <Text style={styles.heading}>10. Cookies et technologies similaires</Text>
+        <Text style={styles.heading}>11. Cookies et technologies similaires</Text>
         <Text style={styles.body}>
-          L'Application n'utilise pas de cookies. Seul un identifiant anonyme est stocké localement sur votre appareil pour distinguer les contributions. Cet identifiant ne permet pas de vous identifier personnellement.
+          L'Application n'utilise pas de cookies au sens traditionnel. Cependant, les technologies suivantes sont utilisées :
         </Text>
+        <Text style={styles.bullet}>• Stockage local sécurisé pour vos données de session et préférences.</Text>
+        <Text style={styles.bullet}>• Identifiants publicitaires pour la personnalisation des annonces via Google AdMob.</Text>
+        <Text style={styles.bullet}>• Tokens d'authentification pour maintenir votre connexion.</Text>
 
-        <Text style={styles.heading}>11. Protection des mineurs</Text>
+        <Text style={styles.heading}>12. Protection des mineurs</Text>
         <Text style={styles.body}>
           L'Application n'est pas destinée aux enfants de moins de 16 ans. Nous ne collectons pas sciemment de données personnelles de mineurs. Si vous êtes parent ou tuteur et que vous pensez que votre enfant nous a communiqué des données, veuillez nous contacter pour que nous puissions les supprimer.
         </Text>
 
-        <Text style={styles.heading}>12. Modifications de la Politique</Text>
+        <Text style={styles.heading}>13. Modifications de la Politique</Text>
         <Text style={styles.body}>
           Nous pouvons mettre à jour cette Politique de Confidentialité à tout moment. En cas de modification substantielle, nous vous en informerons via l'Application. Nous vous encourageons à consulter régulièrement cette page.
         </Text>
 
-        <Text style={styles.heading}>13. Contact</Text>
+        <Text style={styles.heading}>14. Contact</Text>
         <Text style={styles.body}>
           Pour toute question relative à cette Politique de Confidentialité ou à vos données personnelles, contactez-nous à : contact@capasseoupas.app
         </Text>
