@@ -36,6 +36,7 @@ export interface AuthUser {
   email: string;
   username: string;
   authMethod: AuthMethod;
+  password?: string;
   createdAt: string;
   reportsCount: number;
   level: string;

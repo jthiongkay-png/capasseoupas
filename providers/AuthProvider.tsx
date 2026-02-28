@@ -5,6 +5,7 @@ import createContextHook from '@nkzw/create-context-hook';
 import { AuthUser, AuthMethod } from '@/types';
 
 const AUTH_KEY = 'capasseoupas_auth';
+const ACCOUNTS_KEY = 'capasseoupas_accounts';
 
 function generateId() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2);
@@ -58,7 +59,74 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     }
   }, [authQuery.data, authQuery.isLoading]);
 
+  const getStoredAccounts = useCallback(async (): Promise<AuthUser[]> => {
+    try {
+      const stored = await AsyncStorage.getItem(ACCOUNTS_KEY);
+      return stored ? JSON.parse(stored) : [];
+    } catch (e) {
+      console.log('[AuthProvider] Error loading accounts:', e);
+      return [];
+    }
+  }, []);
+
+  const saveAccount = useCallback(async (user: AuthUser) => {
+    const accounts = await getStoredAccounts();
+    const idx = accounts.findIndex((a) => a.email === user.email && a.authMethod === user.authMethod);
+    if (idx >= 0) {
+      accounts[idx] = user;
+    } else {
+      accounts.push(user);
+    }
+    await AsyncStorage.setItem(ACCOUNTS_KEY, JSON.stringify(accounts));
+  }, [getStoredAccounts]);
+
+  const signUp = useCallback(async (email: string, password: string) => {
+    const accounts = await getStoredAccounts();
+    const existing = accounts.find((a) => a.email === email && a.authMethod === 'email');
+    if (existing) {
+      throw new Error('ACCOUNT_EXISTS');
+    }
+    const newUser: AuthUser = {
+      id: generateId(),
+      email,
+      username: '',
+      authMethod: 'email',
+      password,
+      createdAt: new Date().toISOString(),
+      reportsCount: 0,
+      level: 'Débutant',
+    };
+    await saveAccount(newUser);
+    setAuthUser(newUser);
+    saveMutation.mutate(newUser);
+    console.log('[AuthProvider] Signed up:', email);
+    return newUser;
+  }, [getStoredAccounts, saveAccount, saveMutation]);
+
+  const signInEmail = useCallback(async (email: string, password: string) => {
+    const accounts = await getStoredAccounts();
+    const existing = accounts.find((a) => a.email === email && a.authMethod === 'email');
+    if (!existing) {
+      throw new Error('NO_ACCOUNT');
+    }
+    if (existing.password !== password) {
+      throw new Error('WRONG_PASSWORD');
+    }
+    setAuthUser(existing);
+    saveMutation.mutate(existing);
+    console.log('[AuthProvider] Email sign in:', email);
+    return existing;
+  }, [getStoredAccounts, saveMutation]);
+
   const signIn = useCallback(async (email: string, method: AuthMethod) => {
+    const accounts = await getStoredAccounts();
+    const existing = accounts.find((a) => a.email === email && a.authMethod === method);
+    if (existing) {
+      setAuthUser(existing);
+      saveMutation.mutate(existing);
+      console.log('[AuthProvider] Social sign in (existing):', email, method);
+      return existing;
+    }
     const newUser: AuthUser = {
       id: generateId(),
       email,
@@ -68,11 +136,12 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       reportsCount: 0,
       level: 'Débutant',
     };
+    await saveAccount(newUser);
     setAuthUser(newUser);
     saveMutation.mutate(newUser);
     console.log('[AuthProvider] Signed in:', email, method);
     return newUser;
-  }, [saveMutation]);
+  }, [getStoredAccounts, saveAccount, saveMutation]);
 
   const setUsername = useCallback((username: string) => {
     setAuthUser((prev) => {
@@ -110,6 +179,8 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     hasUsername,
     isReady,
     signIn,
+    signUp,
+    signInEmail,
     setUsername,
     incrementReports,
     signOut,
