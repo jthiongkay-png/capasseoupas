@@ -1,8 +1,8 @@
-import React, { useMemo, useCallback, useRef, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Animated, Alert, Image, Dimensions, Platform } from 'react-native';
+import React, { useMemo, useCallback, useRef } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Animated, Alert, Image, Dimensions, Platform, Linking, Share } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ArrowLeft, CheckCircle, XCircle, MapPin, Clock, Users, TrendingUp, ThumbsUp, ThumbsDown, Trash2, Phone, Globe, Navigation, Share2, AlertTriangle, Info } from 'lucide-react-native';
+import { ArrowLeft, CheckCircle, XCircle, MapPin, ThumbsUp, ThumbsDown, Trash2, Phone, Globe, Navigation, Share2, AlertTriangle, Info } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { useThemeColors, ThemeColors } from '@/constants/colors';
 import { usePlaces } from '@/providers/PlacesProvider';
@@ -42,11 +42,114 @@ export default function PlaceDetailScreen() {
   const acceptRate = totalReports > 0 && place ? Math.round((place.reportsAccepted / totalReports) * 100) : 0;
   const isNotAccepted = totalReports > 0 && acceptRate < 90;
 
+  const handleDirections = useCallback(() => {
+    if (!place) return;
+    const lat = place.latitude;
+    const lng = place.longitude;
+    const label = encodeURIComponent(place.name);
+
+    if (Platform.OS === 'ios') {
+      Alert.alert(
+        'Ouvrir dans',
+        'Choisissez votre application de navigation',
+        [
+          {
+            text: 'Apple Plans',
+            onPress: () => void Linking.openURL(`maps:?daddr=${lat},${lng}&q=${label}`),
+          },
+          {
+            text: 'Google Maps',
+            onPress: () => {
+              const gmapsUrl = `comgooglemaps://?daddr=${lat},${lng}&q=${label}`;
+              void Linking.canOpenURL(gmapsUrl).then((supported) => {
+                if (supported) {
+                  void Linking.openURL(gmapsUrl);
+                } else {
+                  void Linking.openURL(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`);
+                }
+              });
+            },
+          },
+          {
+            text: 'Waze',
+            onPress: () => {
+              const wazeUrl = `waze://?ll=${lat},${lng}&navigate=yes`;
+              void Linking.canOpenURL(wazeUrl).then((supported) => {
+                if (supported) {
+                  void Linking.openURL(wazeUrl);
+                } else {
+                  void Linking.openURL(`https://www.waze.com/ul?ll=${lat},${lng}&navigate=yes`);
+                }
+              });
+            },
+          },
+          { text: 'Annuler', style: 'cancel' },
+        ]
+      );
+    } else if (Platform.OS === 'android') {
+      void Linking.openURL(`google.navigation:q=${lat},${lng}`).catch(() => {
+        void Linking.openURL(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`);
+      });
+    } else {
+      void Linking.openURL(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`);
+    }
+    console.log('[PlaceDetail] Opening directions for', place.name);
+  }, [place]);
+
+  const handleCall = useCallback(() => {
+    if (!place) return;
+    if (!place.phone) {
+      Alert.alert('Numéro indisponible', "Aucun numéro de téléphone n'est enregistré pour cet établissement.");
+      return;
+    }
+    Alert.alert(
+      place.name,
+      place.phone,
+      [
+        {
+          text: 'Appeler',
+          onPress: () => {
+            const phoneUrl = `tel:${place.phone!.replace(/\s/g, '')}`;
+            void Linking.openURL(phoneUrl).catch(() => {
+              console.log('[PlaceDetail] Cannot open phone dialer');
+            });
+          },
+        },
+        { text: 'Annuler', style: 'cancel' },
+      ]
+    );
+    console.log('[PlaceDetail] Call action for', place.name, place.phone);
+  }, [place]);
+
+  const handleWebsite = useCallback(() => {
+    if (!place) return;
+    if (!place.website) {
+      Alert.alert('Site web indisponible', "Aucun site web n'est enregistré pour cet établissement.");
+      return;
+    }
+    void Linking.openURL(place.website).catch(() => {
+      console.log('[PlaceDetail] Cannot open website:', place.website);
+    });
+    console.log('[PlaceDetail] Opening website for', place.name);
+  }, [place]);
+
+  const handleShare = useCallback(async () => {
+    if (!place) return;
+    try {
+      await Share.share({
+        message: `${place.name} - ${place.address}\nStatut Amex : ${place.accepted ? 'Acceptée' : 'Refusée'}\nTaux d'acceptation : ${Math.round((place.reportsAccepted / Math.max(place.reportsAccepted + place.reportsRefused, 1)) * 100)}%`,
+      });
+      console.log('[PlaceDetail] Shared', place.name);
+    } catch (error) {
+      console.log('[PlaceDetail] Share error:', error);
+    }
+  }, [place]);
+
   const handleReport = useCallback((accepted: boolean) => {
     if (!place) return;
     updatePlaceReport(place.id, accepted);
     incrementReports();
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     console.log('[PlaceDetail] Reported', place.name, 'as', accepted ? 'accepted' : 'refused');
   }, [place, updatePlaceReport, incrementReports]);
 
@@ -62,7 +165,7 @@ export default function PlaceDetailScreen() {
           style: 'destructive',
           onPress: () => {
             deletePlace(place.id);
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+            void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
             console.log('[PlaceDetail] Deleted place:', place.name);
             router.back();
           },
@@ -159,25 +262,25 @@ export default function PlaceDetailScreen() {
         </View>
 
         <View style={styles.actionBar}>
-          <TouchableOpacity style={styles.actionItem} activeOpacity={0.7}>
+          <TouchableOpacity style={styles.actionItem} activeOpacity={0.7} onPress={handleDirections}>
             <View style={styles.actionIcon}>
               <Navigation size={18} color={colors.primary} strokeWidth={1.5} />
             </View>
             <Text style={styles.actionLabel}>Itinéraire</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionItem} activeOpacity={0.7}>
-            <View style={styles.actionIcon}>
-              <Phone size={18} color={colors.primary} strokeWidth={1.5} />
+          <TouchableOpacity style={styles.actionItem} activeOpacity={0.7} onPress={handleCall}>
+            <View style={[styles.actionIcon, !place.phone && styles.actionIconDisabled]}>
+              <Phone size={18} color={place.phone ? colors.primary : colors.textTertiary} strokeWidth={1.5} />
             </View>
-            <Text style={styles.actionLabel}>Appeler</Text>
+            <Text style={[styles.actionLabel, !place.phone && styles.actionLabelDisabled]}>Appeler</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionItem} activeOpacity={0.7}>
-            <View style={styles.actionIcon}>
-              <Globe size={18} color={colors.primary} strokeWidth={1.5} />
+          <TouchableOpacity style={styles.actionItem} activeOpacity={0.7} onPress={handleWebsite}>
+            <View style={[styles.actionIcon, !place.website && styles.actionIconDisabled]}>
+              <Globe size={18} color={place.website ? colors.primary : colors.textTertiary} strokeWidth={1.5} />
             </View>
-            <Text style={styles.actionLabel}>Site web</Text>
+            <Text style={[styles.actionLabel, !place.website && styles.actionLabelDisabled]}>Site web</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionItem} activeOpacity={0.7}>
+          <TouchableOpacity style={styles.actionItem} activeOpacity={0.7} onPress={handleShare}>
             <View style={styles.actionIcon}>
               <Share2 size={18} color={colors.primary} strokeWidth={1.5} />
             </View>
@@ -511,6 +614,12 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     fontSize: 11,
     fontWeight: '500' as const,
     color: colors.primary,
+  },
+  actionIconDisabled: {
+    opacity: 0.5,
+  },
+  actionLabelDisabled: {
+    color: colors.textTertiary,
   },
   card: {
     backgroundColor: colors.surface,

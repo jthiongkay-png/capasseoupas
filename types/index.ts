@@ -10,6 +10,8 @@ export interface Place {
   reportsRefused: number;
   lastReportDate: string;
   reportedBy: string;
+  phone?: string;
+  website?: string;
 }
 
 export interface Report {

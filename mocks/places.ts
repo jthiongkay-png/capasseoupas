@@ -14,6 +14,8 @@ export const MOCK_PLACES: Place[] = [
     reportsRefused: 1,
     lastReportDate: '2026-02-18',
     reportedBy: 'Sophie M.',
+    phone: '+33 1 40 69 60 50',
+    website: 'https://www.fouquets-paris.com',
   },
   {
     id: '3',
@@ -27,6 +29,8 @@ export const MOCK_PLACES: Place[] = [
     reportsRefused: 0,
     lastReportDate: '2026-02-19',
     reportedBy: 'Julie R.',
+    phone: '+33 1 42 72 25 76',
+    website: 'https://www.benoit-paris.com',
   },
   {
     id: '7',
@@ -40,6 +44,8 @@ export const MOCK_PLACES: Place[] = [
     reportsRefused: 0,
     lastReportDate: '2026-02-21',
     reportedBy: 'Isabelle P.',
+    phone: '+33 1 42 60 82 00',
+    website: 'https://www.angelina-paris.fr',
   },
   {
     id: '10',
@@ -66,6 +72,8 @@ export const MOCK_PLACES: Place[] = [
     reportsRefused: 0,
     lastReportDate: '2026-02-21',
     reportedBy: 'Chloé W.',
+    phone: '+33 1 42 82 34 56',
+    website: 'https://www.galerieslafayette.com',
   },
   {
     id: '13',
@@ -79,6 +87,8 @@ export const MOCK_PLACES: Place[] = [
     reportsRefused: 0,
     lastReportDate: '2026-02-21',
     reportedBy: 'Diane S.',
+    phone: '+33 1 49 54 46 46',
+    website: 'https://www.hotellutetia.com',
   },
   {
     id: '17',
@@ -159,6 +169,8 @@ export const MOCK_PLACES: Place[] = [
     reportsRefused: 0,
     lastReportDate: '2026-02-20',
     reportedBy: 'Laurent M.',
+    phone: '+33 4 72 42 90 90',
+    website: 'https://www.bocuse.fr',
   },
   {
     id: '102',
@@ -213,6 +225,8 @@ export const MOCK_PLACES: Place[] = [
     reportsRefused: 1,
     lastReportDate: '2026-02-20',
     reportedBy: 'Jean-Marc P.',
+    phone: '+33 4 91 52 14 38',
+    website: 'https://www.chez-fonfon.com',
   },
   {
     id: '202',
@@ -267,6 +281,8 @@ export const MOCK_PLACES: Place[] = [
     reportsRefused: 0,
     lastReportDate: '2026-02-21',
     reportedBy: 'Monique F.',
+    phone: '+33 4 93 16 64 00',
+    website: 'https://www.hotel-negresco-nice.com',
   },
   {
     id: '301',
@@ -280,6 +296,8 @@ export const MOCK_PLACES: Place[] = [
     reportsRefused: 0,
     lastReportDate: '2026-02-21',
     reportedBy: 'Gérard T.',
+    phone: '+33 4 93 16 64 00',
+    website: 'https://www.hotel-negresco-nice.com',
   },
   {
     id: '303',
