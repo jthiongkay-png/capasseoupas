@@ -10,7 +10,6 @@ import { Place, PlaceCategory, CATEGORY_LABELS } from '@/types';
 import FloatingActionButton from '@/components/FloatingActionButton';
 import PlaceCard from '@/components/PlaceCard';
 import { useLocation } from '@/providers/LocationProvider';
-import { useAuth } from '@/providers/AuthProvider';
 
 let NativeMapView: any = null;
 let NativeMarker: any = null;
@@ -133,15 +132,9 @@ export default function MapScreen() {
     router.push(`/place/${place.id}` as any);
   }, [router]);
 
-  const { isAuthenticated, hasUsername } = useAuth();
-
   const handleAddReport = useCallback(() => {
-    if (!isAuthenticated || !hasUsername) {
-      router.push('/login' as any);
-      return;
-    }
     router.push('/add-report' as any);
-  }, [router, isAuthenticated, hasUsername]);
+  }, [router]);
 
   const handleCenterMap = useCallback(() => {
     if (userLocation) {

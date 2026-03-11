@@ -375,11 +375,6 @@ export default function PlaceDetailScreen() {
           </View>
           <View style={styles.infoSeparator} />
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Signalé par</Text>
-            <Text style={styles.infoValue}>{place.reportedBy}</Text>
-          </View>
-          <View style={styles.infoSeparator} />
-          <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>Statut Amex</Text>
             <Text style={[
               styles.infoValue,

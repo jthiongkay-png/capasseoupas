@@ -1,11 +1,10 @@
 import React, { useCallback, useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Linking, Platform, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Linking, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Info, FileText, Shield, Mail, ChevronRight, CreditCard, Users, Star, Heart, LogIn, LogOut, User, Award } from 'lucide-react-native';
+import { Info, FileText, Shield, Mail, ChevronRight, CreditCard, Users, Star, Heart } from 'lucide-react-native';
 import { useThemeColors, ThemeColors } from '@/constants/colors';
 import { usePlaces } from '@/providers/PlacesProvider';
-import { useAuth } from '@/providers/AuthProvider';
 
 const APP_VERSION = '1.0.0';
 
@@ -43,27 +42,11 @@ export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { places } = usePlaces();
-  const { authUser, isAuthenticated, signOut } = useAuth();
   const colors = useThemeColors();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
   const acceptedCount = places.filter((p) => p.accepted).length;
   const refusedCount = places.filter((p) => !p.accepted).length;
-
-  const handleLogin = useCallback(() => {
-    router.push('/login' as any);
-  }, [router]);
-
-  const handleLogout = useCallback(() => {
-    Alert.alert(
-      'Déconnexion',
-      'Êtes-vous sûr de vouloir vous déconnecter ?',
-      [
-        { text: 'Annuler', style: 'cancel' },
-        { text: 'Déconnecter', style: 'destructive', onPress: () => signOut() },
-      ]
-    );
-  }, [signOut]);
 
   const handleContact = useCallback(() => {
     Linking.openURL('mailto:contact@capasseoupas.app');
@@ -89,44 +72,6 @@ export default function SettingsScreen() {
           <Text style={styles.appTitleRest}>apasseoupas</Text>
         </View>
         <Text style={styles.headerSubtitle}>Paramètres</Text>
-      </View>
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Compte</Text>
-        <View style={styles.card}>
-          {isAuthenticated && authUser ? (
-            <>
-              <SettingsRow
-                colors={colors}
-                icon={<User size={18} color="#006FCF" strokeWidth={1.5} />}
-                label={authUser.username || 'Utilisateur'}
-                sublabel={authUser.email}
-              />
-              <View style={styles.rowDivider} />
-              <SettingsRow
-                colors={colors}
-                icon={<Award size={18} color={colors.warning} strokeWidth={1.5} />}
-                label={authUser.level}
-                sublabel={`${authUser.reportsCount} signalement${authUser.reportsCount !== 1 ? 's' : ''}`}
-              />
-              <View style={styles.rowDivider} />
-              <SettingsRow
-                colors={colors}
-                icon={<LogOut size={18} color={colors.refused} strokeWidth={1.5} />}
-                label="Se déconnecter"
-                onPress={handleLogout}
-              />
-            </>
-          ) : (
-            <SettingsRow
-              colors={colors}
-              icon={<LogIn size={18} color="#006FCF" strokeWidth={1.5} />}
-              label="Se connecter"
-              sublabel="Connectez-vous pour signaler des commerces"
-              onPress={handleLogin}
-            />
-          )}
-        </View>
       </View>
 
       <View style={styles.statsBar}>
