@@ -2,14 +2,15 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import React, { useEffect } from 'react';
-import { Platform, useColorScheme } from 'react-native';
+import { Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { PlacesProvider } from '@/providers/PlacesProvider';
 import { UserProvider } from '@/providers/UserProvider';
 import { LocationProvider } from '@/providers/LocationProvider';
 import { useThemeColors } from '@/constants/colors';
+import ErrorBoundary from '@/components/ErrorBoundary';
 
-SplashScreen.preventAutoHideAsync();
+void SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient();
 
@@ -62,20 +63,22 @@ function RootLayoutNav() {
 
 export default function RootLayout() {
   useEffect(() => {
-    SplashScreen.hideAsync();
+    void SplashScreen.hideAsync();
   }, []);
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <GestureHandlerRootView style={{ flex: 1 }}>
-        <LocationProvider>
-          <PlacesProvider>
-            <UserProvider>
-              <RootLayoutNav />
-            </UserProvider>
-          </PlacesProvider>
-        </LocationProvider>
-      </GestureHandlerRootView>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <GestureHandlerRootView style={{ flex: 1 }}>
+          <LocationProvider>
+            <PlacesProvider>
+              <UserProvider>
+                <RootLayoutNav />
+              </UserProvider>
+            </PlacesProvider>
+          </LocationProvider>
+        </GestureHandlerRootView>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }

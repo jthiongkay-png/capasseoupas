@@ -4,7 +4,7 @@ import { Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeColors, ThemeColors } from '@/constants/colors';
 
-const LAST_UPDATED = '24 février 2026';
+const LAST_UPDATED = '12 mars 2026';
 
 export default function TermsScreen() {
   const insets = useSafeAreaInsets();
@@ -96,8 +96,13 @@ export default function TermsScreen() {
 
         <Text style={styles.heading}>9. Modération du contenu</Text>
         <Text style={styles.body}>
-          L'Éditeur se réserve le droit de supprimer, sans préavis, tout signalement ou contenu jugé inapproprié, inexact, trompeur ou contraire aux présentes CGU. Les utilisateurs peuvent signaler un contenu inapproprié via la fonction de contact de l'Application.
+          L'Éditeur met en place des mécanismes de modération pour garantir la qualité des informations et le respect des utilisateurs :
         </Text>
+        <Text style={styles.bullet}>• Signalement : Chaque fiche de lieu dispose d'un bouton « Signaler un problème » permettant de signaler des informations incorrectes, du contenu inapproprié ou des doublons.</Text>
+        <Text style={styles.bullet}>• Examen : Les signalements sont examinés par notre équipe dans un délai raisonnable (48 heures ouvrées maximum).</Text>
+        <Text style={styles.bullet}>• Suppression : L'Éditeur se réserve le droit de supprimer, sans préavis, tout signalement ou contenu jugé inapproprié, inexact, trompeur ou contraire aux présentes CGU.</Text>
+        <Text style={styles.bullet}>• Blocage : Les utilisateurs qui publient de manière répétée du contenu abusif ou trompeur peuvent se voir restreindre ou supprimer l'accès à l'Application.</Text>
+        <Text style={styles.bullet}>• Contact : Les utilisateurs peuvent également signaler tout abus directement par e-mail à contact@capasseoupas.app.</Text>
 
         <Text style={styles.heading}>10. Modification des CGU</Text>
         <Text style={styles.body}>

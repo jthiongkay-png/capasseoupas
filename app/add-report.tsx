@@ -59,17 +59,25 @@ export default function AddReportScreen() {
     }
     setLoadingSuggestions(true);
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
       const res = await fetch(
         `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=5`,
-        { headers: { 'Accept-Language': 'fr' } }
+        { headers: { 'Accept-Language': 'fr' }, signal: controller.signal }
       );
+      clearTimeout(timeoutId);
       const data: NominatimResult[] = await res.json();
       setSuggestions(data);
       setShowSuggestions(data.length > 0);
       console.log('[AddReport] Fetched suggestions:', data.length);
-    } catch (err) {
-      console.log('[AddReport] Suggestion fetch error:', err);
+    } catch (err: any) {
+      if (err?.name === 'AbortError') {
+        console.log('[AddReport] Suggestion fetch timed out');
+      } else {
+        console.log('[AddReport] Suggestion fetch error:', err);
+      }
       setSuggestions([]);
+      setShowSuggestions(false);
     } finally {
       setLoadingSuggestions(false);
     }
@@ -79,7 +87,7 @@ export default function AddReportScreen() {
     setName(text);
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
-      fetchSuggestions(text);
+      void fetchSuggestions(text);
     }, 400);
   }, [fetchSuggestions]);
 
@@ -104,7 +112,7 @@ export default function AddReportScreen() {
     setLongitude(parseFloat(item.lon));
     setSuggestions([]);
     setShowSuggestions(false);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     console.log('[AddReport] Selected:', placeName, formattedAddress);
   }, []);
 
@@ -130,7 +138,7 @@ export default function AddReportScreen() {
     };
 
     addPlace(newPlace);
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     console.log('[AddReport] Place added:', newPlace.name);
     router.back();
   }, [name, address, category, accepted, latitude, longitude, addPlace, router]);
@@ -161,7 +169,7 @@ export default function AddReportScreen() {
 
   const handleAcceptedPress = useCallback((value: boolean) => {
     setAccepted(value);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   }, []);
 
   return (

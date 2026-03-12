@@ -4,7 +4,7 @@ import { Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeColors, ThemeColors } from '@/constants/colors';
 
-const LAST_UPDATED = '24 février 2026';
+const LAST_UPDATED = '12 mars 2026';
 
 export default function PrivacyScreen() {
   const insets = useSafeAreaInsets();
@@ -166,14 +166,31 @@ export default function PrivacyScreen() {
           L'Application n'est pas destinée aux enfants de moins de 16 ans. Nous ne collectons pas sciemment de données personnelles de mineurs. Si vous êtes parent ou tuteur et que vous pensez que votre enfant nous a communiqué des données, veuillez nous contacter pour que nous puissions les supprimer.
         </Text>
 
-        <Text style={styles.heading}>13. Modifications de la Politique</Text>
+        <Text style={styles.heading}>13. Modération du contenu et signalement d'abus</Text>
+        <Text style={styles.body}>
+          Capasseoupas met en place un système de modération pour garantir la qualité et la fiabilité des informations partagées par la communauté :
+        </Text>
+        <Text style={styles.subheading}>13.1 Mécanismes de signalement</Text>
+        <Text style={styles.bullet}>• Chaque fiche de lieu dispose d'un bouton « Signaler un problème » permettant de signaler des informations incorrectes, du contenu inapproprié ou des doublons.</Text>
+        <Text style={styles.bullet}>• Les signalements sont examinés par notre équipe dans un délai raisonnable.</Text>
+        <Text style={styles.bullet}>• Vous pouvez également nous contacter directement à contact@capasseoupas.app pour signaler tout abus.</Text>
+        <Text style={styles.subheading}>13.2 Politique de modération</Text>
+        <Text style={styles.bullet}>• Les contenus signalés comme inappropriés, inexacts ou abusifs sont examinés et peuvent être supprimés sans préavis.</Text>
+        <Text style={styles.bullet}>• Les utilisateurs qui publient de manière répétée du contenu abusif, trompeur ou contraire aux bonnes pratiques peuvent voir leur accès restreint ou supprimé.</Text>
+        <Text style={styles.bullet}>• Nous nous réservons le droit de bloquer tout utilisateur en cas de comportement abusif, conformément à nos Conditions Générales d'Utilisation.</Text>
+        <Text style={styles.subheading}>13.3 Contact pour signalement d'abus</Text>
+        <Text style={styles.body}>
+          Pour signaler tout contenu abusif, inapproprié ou toute violation de nos conditions d'utilisation, vous pouvez nous contacter à : contact@capasseoupas.app. Nous nous engageons à traiter chaque signalement dans un délai de 48 heures ouvrées.
+        </Text>
+
+        <Text style={styles.heading}>14. Modifications de la Politique</Text>
         <Text style={styles.body}>
           Nous pouvons mettre à jour cette Politique de Confidentialité à tout moment. En cas de modification substantielle, nous vous en informerons via l'Application. Nous vous encourageons à consulter régulièrement cette page.
         </Text>
 
-        <Text style={styles.heading}>14. Contact</Text>
+        <Text style={styles.heading}>15. Contact</Text>
         <Text style={styles.body}>
-          Pour toute question relative à cette Politique de Confidentialité ou à vos données personnelles, contactez-nous à : contact@capasseoupas.app
+          Pour toute question relative à cette Politique de Confidentialité, à vos données personnelles, ou pour signaler un abus, contactez-nous à : contact@capasseoupas.app
         </Text>
       </ScrollView>
     </View>

@@ -25,9 +25,14 @@ export const [PlacesProvider, usePlaces] = createContextHook(() => {
         console.log('[PlacesProvider] Error loading places:', e);
       }
       console.log('[PlacesProvider] Using mock places');
-      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(MOCK_PLACES));
+      try {
+        await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(MOCK_PLACES));
+      } catch (e) {
+        console.log('[PlacesProvider] Error saving mock places:', e);
+      }
       return MOCK_PLACES;
     },
+    retry: 2,
   });
 
   const saveMutation = useMutation({
@@ -36,7 +41,7 @@ export const [PlacesProvider, usePlaces] = createContextHook(() => {
       return updatedPlaces;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['places'] });
+      void queryClient.invalidateQueries({ queryKey: ['places'] });
     },
   });
 
@@ -91,14 +96,14 @@ export const [PlacesProvider, usePlaces] = createContextHook(() => {
     [places]
   );
 
-  return {
+  return useMemo(() => ({
     places,
     isLoading: placesQuery.isLoading,
     addPlace,
     updatePlaceReport,
     deletePlace,
     getPlaceById,
-  };
+  }), [places, placesQuery.isLoading, addPlace, updatePlaceReport, deletePlace, getPlaceById]);
 });
 
 export function useFilteredPlaces(search: string, category: PlaceCategory | null, statusFilter: 'all' | 'accepted' | 'refused') {

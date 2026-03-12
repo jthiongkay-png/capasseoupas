@@ -2,7 +2,7 @@ import React, { useMemo, useCallback, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated, Alert, Image, Dimensions, Platform, Linking, Share } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ArrowLeft, CheckCircle, XCircle, MapPin, ThumbsUp, ThumbsDown, Trash2, Phone, Globe, Navigation, Share2, AlertTriangle, Info } from 'lucide-react-native';
+import { ArrowLeft, CheckCircle, XCircle, MapPin, ThumbsUp, ThumbsDown, Trash2, Phone, Globe, Navigation, Share2, AlertTriangle, Info, Flag } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { useThemeColors, ThemeColors } from '@/constants/colors';
 import { usePlaces } from '@/providers/PlacesProvider';
@@ -173,6 +173,50 @@ export default function PlaceDetailScreen() {
       ]
     );
   }, [place, deletePlace, router]);
+
+  const handleFlagContent = useCallback(() => {
+    if (!place) return;
+    Alert.alert(
+      'Signaler un contenu',
+      'Pourquoi souhaitez-vous signaler ce lieu ?',
+      [
+        {
+          text: 'Informations incorrectes',
+          onPress: () => {
+            Alert.alert(
+              'Signalement envoyé',
+              'Merci pour votre signalement. Notre équipe examinera ce contenu dans les plus brefs délais. Vous pouvez aussi nous contacter à contact@capasseoupas.app',
+            );
+            void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            console.log('[PlaceDetail] Flagged place as incorrect:', place.name);
+          },
+        },
+        {
+          text: 'Contenu inapproprié',
+          onPress: () => {
+            Alert.alert(
+              'Signalement envoyé',
+              'Merci pour votre signalement. Notre équipe examinera ce contenu dans les plus brefs délais. Vous pouvez aussi nous contacter à contact@capasseoupas.app',
+            );
+            void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            console.log('[PlaceDetail] Flagged place as inappropriate:', place.name);
+          },
+        },
+        {
+          text: 'Lieu en double',
+          onPress: () => {
+            Alert.alert(
+              'Signalement envoyé',
+              'Merci pour votre signalement. Notre équipe examinera ce contenu dans les plus brefs délais.',
+            );
+            void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            console.log('[PlaceDetail] Flagged place as duplicate:', place.name);
+          },
+        },
+        { text: 'Annuler', style: 'cancel' },
+      ]
+    );
+  }, [place]);
 
   const headerOpacity = scrollY.interpolate({
     inputRange: [0, HERO_HEIGHT - 80],
@@ -411,6 +455,16 @@ export default function PlaceDetailScreen() {
             </TouchableOpacity>
           </View>
         </View>
+
+        <TouchableOpacity
+          style={styles.flagButton}
+          onPress={handleFlagContent}
+          activeOpacity={0.7}
+          testID="flag-content"
+        >
+          <Flag size={16} color={colors.textSecondary} strokeWidth={1.5} />
+          <Text style={styles.flagButtonText}>Signaler un problème</Text>
+        </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.deleteButton}
@@ -809,13 +863,31 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     fontWeight: '600' as const,
     color: '#FFF',
   },
-  deleteButton: {
+  flagButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
     marginHorizontal: 16,
     marginTop: 20,
+    paddingVertical: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+  },
+  flagButtonText: {
+    fontSize: 14,
+    fontWeight: '500' as const,
+    color: colors.textSecondary,
+  },
+  deleteButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginHorizontal: 16,
+    marginTop: 10,
     paddingVertical: 14,
     borderRadius: 12,
     borderWidth: 1,

@@ -1,8 +1,8 @@
 import React, { useCallback, useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Linking, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Linking, Platform, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Info, FileText, Shield, Mail, ChevronRight, CreditCard, Users, Star, Heart } from 'lucide-react-native';
+import { Info, FileText, Shield, Mail, ChevronRight, CreditCard, Users, Star, Heart, Flag, AlertOctagon } from 'lucide-react-native';
 import { useThemeColors, ThemeColors } from '@/constants/colors';
 import { usePlaces } from '@/providers/PlacesProvider';
 
@@ -49,7 +49,24 @@ export default function SettingsScreen() {
   const refusedCount = places.filter((p) => !p.accepted).length;
 
   const handleContact = useCallback(() => {
-    Linking.openURL('mailto:contact@capasseoupas.app');
+    void Linking.openURL('mailto:contact@capasseoupas.app');
+  }, []);
+
+  const handleReportAbuse = useCallback(() => {
+    Alert.alert(
+      'Signaler un abus',
+      'Comment souhaitez-vous signaler ?',
+      [
+        {
+          text: 'Par e-mail',
+          onPress: () => void Linking.openURL('mailto:contact@capasseoupas.app?subject=Signalement%20d%27abus%20-%20Capasseoupas'),
+        },
+        {
+          text: 'Annuler',
+          style: 'cancel',
+        },
+      ]
+    );
   }, []);
 
   const handleRate = useCallback(() => {
@@ -57,7 +74,7 @@ export default function SettingsScreen() {
     const storeUrl = Platform.OS === 'ios'
       ? 'https://apps.apple.com/app/capasseoupas'
       : 'https://play.google.com/store/apps/details?id=com.capasseoupas';
-    Linking.openURL(storeUrl);
+    void Linking.openURL(storeUrl);
   }, []);
 
   return (
@@ -168,6 +185,27 @@ export default function SettingsScreen() {
             icon={<Shield size={18} color={colors.textSecondary} strokeWidth={1.5} />}
             label="Politique de confidentialité"
             sublabel="Comment nous protégeons vos données"
+            onPress={() => router.push('/privacy' as never)}
+          />
+        </View>
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Modération et signalement</Text>
+        <View style={styles.card}>
+          <SettingsRow
+            colors={colors}
+            icon={<Flag size={18} color={colors.warning} strokeWidth={1.5} />}
+            label="Signaler un abus"
+            sublabel="Contenu inapproprié, informations incorrectes"
+            onPress={handleReportAbuse}
+          />
+          <View style={styles.rowDivider} />
+          <SettingsRow
+            colors={colors}
+            icon={<AlertOctagon size={18} color={colors.textSecondary} strokeWidth={1.5} />}
+            label="Politique de modération"
+            sublabel="Comment nous gérons les contenus signalés"
             onPress={() => router.push('/privacy' as never)}
           />
         </View>

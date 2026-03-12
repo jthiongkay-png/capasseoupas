@@ -15,7 +15,10 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "app.rork.capasseoupas"
+      "bundleIdentifier": "app.rork.capasseoupas",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Capasseoupas utilise votre position pour afficher les commerces acceptant ou refusant American Express autour de vous et calculer la distance jusqu'à ces établissements."
+      }
     },
     "android": {
       "adaptiveIcon": {
