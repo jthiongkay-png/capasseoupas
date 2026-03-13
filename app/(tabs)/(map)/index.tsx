@@ -1,6 +1,5 @@
 import React, { useState, useCallback, useRef, useMemo, useEffect } from 'react';
-import { useFocusEffect } from '@react-navigation/native';
-import { View, Text, StyleSheet, Platform, TouchableOpacity, Animated, Dimensions, ScrollView, Keyboard } from 'react-native';
+import { View, Text, StyleSheet, Platform, TouchableOpacity, Animated, ScrollView, Keyboard } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CheckCircle, XCircle, Locate, MapPin, UtensilsCrossed, Coffee, Wine, ShoppingBag, Hotel, Fuel, ShoppingCart, Gamepad2, Heart, Bus, MoreHorizontal, ListFilter } from 'lucide-react-native';
@@ -18,8 +17,6 @@ if (Platform.OS !== 'web') {
   NativeMapView = Maps.default;
   NativeMarker = Maps.Marker;
 }
-
-const { width } = Dimensions.get('window');
 
 const CATEGORY_ICONS: Record<PlaceCategory, React.ComponentType<{ size: number; color: string; strokeWidth?: number }>> = {
   restaurant: UtensilsCrossed,
@@ -63,7 +60,7 @@ export default function MapScreen() {
   const allPlaces = useFilteredPlaces('', null, 'all');
   const filteredPlaces = useFilteredPlaces('', selectedCategory, filter);
   const { places } = usePlaces();
-  const { userLocation, isLoading: locationLoading, requestLocation } = useLocation();
+  const { userLocation, requestLocation } = useLocation();
   const colors = useThemeColors();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
@@ -80,19 +77,23 @@ export default function MapScreen() {
   }, [userLocation]);
 
   const hasAnimatedToUser = useRef(false);
+  const pendingCenterOnLocation = useRef(false);
 
   useEffect(() => {
-    if (userLocation && mapRef.current && !hasAnimatedToUser.current) {
-      hasAnimatedToUser.current = true;
-      mapRef.current.animateToRegion(
-        {
-          latitude: userLocation.latitude,
-          longitude: userLocation.longitude,
-          latitudeDelta: 0.04,
-          longitudeDelta: 0.04,
-        },
-        600
-      );
+    if (userLocation && mapRef.current) {
+      if (!hasAnimatedToUser.current || pendingCenterOnLocation.current) {
+        hasAnimatedToUser.current = true;
+        pendingCenterOnLocation.current = false;
+        mapRef.current.animateToRegion(
+          {
+            latitude: userLocation.latitude,
+            longitude: userLocation.longitude,
+            latitudeDelta: 0.02,
+            longitudeDelta: 0.02,
+          },
+          600
+        );
+      }
     }
   }, [userLocation]);
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
@@ -148,8 +149,8 @@ export default function MapScreen() {
         500
       );
     } else {
-      requestLocation();
-      mapRef.current?.animateToRegion(DEFAULT_REGION, 500);
+      pendingCenterOnLocation.current = true;
+      void requestLocation();
     }
   }, [userLocation, requestLocation]);
 
