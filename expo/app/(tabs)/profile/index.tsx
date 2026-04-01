@@ -2,9 +2,11 @@ import React, { useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Linking, Platform, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Info, FileText, Shield, Mail, ChevronRight, CreditCard, Users, Star, Heart, Flag, AlertOctagon } from 'lucide-react-native';
+import { Info, FileText, Shield, Mail, ChevronRight, CreditCard, Users, Star, Heart, Flag, AlertOctagon, User, LogOut, Bookmark, Edit3 } from 'lucide-react-native';
 import { useThemeColors, ThemeColors } from '@/constants/colors';
 import { usePlaces } from '@/providers/PlacesProvider';
+import { useAuth } from '@/providers/AuthProvider';
+import { useFavourites } from '@/providers/FavouritesProvider';
 
 const APP_VERSION = '1.0.0';
 
@@ -42,6 +44,8 @@ export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { places } = usePlaces();
+  const { user, signOut } = useAuth();
+  const { favouriteIds } = useFavourites();
   const colors = useThemeColors();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
@@ -77,6 +81,34 @@ export default function SettingsScreen() {
     void Linking.openURL(storeUrl);
   }, []);
 
+  const handleSignOut = useCallback(() => {
+    Alert.alert(
+      'Déconnexion',
+      'Êtes-vous sûr de vouloir vous déconnecter ?',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Déconnexion',
+          style: 'destructive',
+          onPress: () => {
+            void signOut();
+            console.log('[Settings] User signed out');
+          },
+        },
+      ]
+    );
+  }, [signOut]);
+
+  const authMethodLabel = useMemo(() => {
+    if (!user) return '';
+    switch (user.authMethod) {
+      case 'apple': return 'Apple';
+      case 'google': return 'Google';
+      case 'email': return 'E-mail';
+      default: return '';
+    }
+  }, [user]);
+
   return (
     <ScrollView
       style={[styles.container, { paddingTop: insets.top }]}
@@ -89,6 +121,45 @@ export default function SettingsScreen() {
           <Text style={styles.appTitleRest}>apasseoupas</Text>
         </View>
         <Text style={styles.headerSubtitle}>Paramètres</Text>
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Mon profil</Text>
+        <View style={styles.card}>
+          <View style={styles.profileHeader}>
+            <View style={styles.profileAvatar}>
+              <User size={24} color={colors.textSecondary} strokeWidth={1.5} />
+            </View>
+            <View style={styles.profileInfo}>
+              <Text style={styles.profileName}>{user?.username ?? 'Utilisateur'}</Text>
+              <Text style={styles.profileEmail}>{user?.email ?? ''}</Text>
+              <View style={styles.profileBadgeRow}>
+                <View style={styles.profileBadge}>
+                  <Text style={styles.profileBadgeText}>Connecté via {authMethodLabel}</Text>
+                </View>
+                <View style={[styles.profileBadge, styles.profileLevelBadge]}>
+                  <Text style={styles.profileLevelText}>{user?.level ?? 'Débutant'}</Text>
+                </View>
+              </View>
+            </View>
+          </View>
+          <View style={styles.rowDivider} />
+          <SettingsRow
+            colors={colors}
+            icon={<Bookmark size={18} color="#006FCF" strokeWidth={1.5} />}
+            label="Mes favoris"
+            sublabel={`${favouriteIds.length} lieu${favouriteIds.length > 1 ? 'x' : ''} sauvegardé${favouriteIds.length > 1 ? 's' : ''}`}
+            onPress={() => router.push('/(tabs)/profile/favourites' as never)}
+          />
+          <View style={styles.rowDivider} />
+          <SettingsRow
+            colors={colors}
+            icon={<Edit3 size={18} color={colors.textSecondary} strokeWidth={1.5} />}
+            label="Mes signalements"
+            sublabel={`${user?.reportsCount ?? 0} signalement${(user?.reportsCount ?? 0) > 1 ? 's' : ''}`}
+            onPress={() => router.push('/(tabs)/profile/my-reports' as never)}
+          />
+        </View>
       </View>
 
       <View style={styles.statsBar}>
@@ -236,6 +307,17 @@ export default function SettingsScreen() {
         </View>
       </View>
 
+      <View style={styles.section}>
+        <View style={styles.card}>
+          <TouchableOpacity style={styles.logoutRow} onPress={handleSignOut} activeOpacity={0.6}>
+            <View style={[styles.settingsRowIcon, styles.logoutIcon]}>
+              <LogOut size={18} color="#FF453A" strokeWidth={1.5} />
+            </View>
+            <Text style={styles.logoutText}>Se déconnecter</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
       <View style={styles.footer}>
         <View style={styles.footerLogo}>
           <Text style={styles.footerLogoAccent}>C</Text>
@@ -287,6 +369,61 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     fontWeight: '400' as const,
     color: colors.textSecondary,
     marginTop: 2,
+  },
+  profileHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    gap: 14,
+  },
+  profileAvatar: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: colors.searchBg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  profileInfo: {
+    flex: 1,
+  },
+  profileName: {
+    fontSize: 18,
+    fontWeight: '700' as const,
+    color: colors.textPrimary,
+    marginBottom: 2,
+  },
+  profileEmail: {
+    fontSize: 13,
+    fontWeight: '400' as const,
+    color: colors.textSecondary,
+    marginBottom: 6,
+  },
+  profileBadgeRow: {
+    flexDirection: 'row',
+    gap: 6,
+  },
+  profileBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    backgroundColor: colors.searchBg,
+  },
+  profileBadgeText: {
+    fontSize: 11,
+    fontWeight: '500' as const,
+    color: colors.textSecondary,
+  },
+  profileLevelBadge: {
+    backgroundColor: '#EBF3FF',
+  },
+  profileLevelText: {
+    fontSize: 11,
+    fontWeight: '600' as const,
+    color: '#006FCF',
   },
   statsBar: {
     flexDirection: 'row',
@@ -424,6 +561,21 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     height: 1,
     backgroundColor: colors.border,
     marginLeft: 64,
+  },
+  logoutRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
+  logoutIcon: {
+    backgroundColor: 'rgba(255, 69, 58, 0.1)',
+  },
+  logoutText: {
+    fontSize: 15,
+    fontWeight: '500' as const,
+    color: '#FF453A',
   },
   footer: {
     alignItems: 'center',

@@ -25,7 +25,10 @@ export interface Report {
 
 export interface User {
   id: string;
+  email: string;
   username: string;
+  password?: string;
+  authMethod: 'email' | 'apple' | 'google';
   reportsCount: number;
   joinDate: string;
   level: string;

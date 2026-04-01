@@ -2,11 +2,12 @@ import React, { useMemo, useCallback, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated, Alert, Image, Dimensions, Platform, Linking, Share } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ArrowLeft, CheckCircle, XCircle, MapPin, ThumbsUp, ThumbsDown, Trash2, Phone, Globe, Navigation, Share2, AlertTriangle, Info, Flag } from 'lucide-react-native';
+import { ArrowLeft, CheckCircle, XCircle, MapPin, ThumbsUp, ThumbsDown, Trash2, Phone, Globe, Navigation, Share2, AlertTriangle, Info, Flag, Star } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { useThemeColors, ThemeColors } from '@/constants/colors';
 import { usePlaces } from '@/providers/PlacesProvider';
-import { useUser } from '@/providers/UserProvider';
+import { useAuth } from '@/providers/AuthProvider';
+import { useFavourites } from '@/providers/FavouritesProvider';
 import { CATEGORY_LABELS, PlaceCategory } from '@/types';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -31,7 +32,8 @@ export default function PlaceDetailScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { getPlaceById, updatePlaceReport, deletePlace } = usePlaces();
-  const { incrementReports } = useUser();
+  const { incrementReports } = useAuth();
+  const { isFavourite, toggleFavourite } = useFavourites();
   const colors = useThemeColors();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const scrollY = useRef(new Animated.Value(0)).current;
@@ -174,6 +176,15 @@ export default function PlaceDetailScreen() {
     );
   }, [place, deletePlace, router]);
 
+  const placeIsFav = useMemo(() => place ? isFavourite(place.id) : false, [place, isFavourite]);
+
+  const handleToggleFavourite = useCallback(() => {
+    if (!place) return;
+    toggleFavourite(place.id);
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    console.log('[PlaceDetail] Toggled favourite for', place.name);
+  }, [place, toggleFavourite]);
+
   const handleFlagContent = useCallback(() => {
     if (!place) return;
     Alert.alert(
@@ -296,7 +307,12 @@ export default function PlaceDetailScreen() {
                 </View>
               )}
             </View>
-            <Text style={styles.heroName}>{place.name}</Text>
+            <View style={styles.heroNameRow}>
+              <Text style={styles.heroName}>{place.name}</Text>
+              <TouchableOpacity onPress={handleToggleFavourite} style={styles.favButton} activeOpacity={0.7}>
+                <Star size={20} color={placeIsFav ? '#FFB800' : 'rgba(255,255,255,0.7)'} fill={placeIsFav ? '#FFB800' : 'transparent'} strokeWidth={2} />
+              </TouchableOpacity>
+            </View>
             <View style={styles.heroMeta}>
               <Text style={styles.heroCategoryText}>{CATEGORY_LABELS[place.category]}</Text>
               <View style={styles.heroDot} />
@@ -608,12 +624,27 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     fontWeight: '600' as const,
     color: '#FF9500',
   },
+  heroNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 6,
+  },
   heroName: {
     fontSize: 26,
     fontWeight: '700' as const,
     color: '#FFFFFF',
     letterSpacing: -0.3,
-    marginBottom: 6,
+    flex: 1,
+  },
+  favButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 10,
   },
   heroMeta: {
     flexDirection: 'row',
