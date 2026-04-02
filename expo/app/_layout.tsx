@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import React, { useEffect } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import { Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { PlacesProvider } from '@/providers/PlacesProvider';
@@ -10,6 +10,7 @@ import { FavouritesProvider } from '@/providers/FavouritesProvider';
 import { LocationProvider } from '@/providers/LocationProvider';
 import { useThemeColors } from '@/constants/colors';
 import ErrorBoundary from '@/components/ErrorBoundary';
+import { requestTrackingPermissionsAsync } from 'expo-tracking-transparency';
 
 void SplashScreen.preventAutoHideAsync();
 
@@ -112,9 +113,21 @@ function RootLayoutNav() {
 }
 
 export default function RootLayout() {
+  const requestTracking = useCallback(async () => {
+    if (Platform.OS !== 'web') {
+      try {
+        const { status } = await requestTrackingPermissionsAsync();
+        console.log('[Tracking] Permission status:', status);
+      } catch (error) {
+        console.log('[Tracking] Error requesting permission:', error);
+      }
+    }
+  }, []);
+
   useEffect(() => {
     void SplashScreen.hideAsync();
-  }, []);
+    void requestTracking();
+  }, [requestTracking]);
 
   return (
     <ErrorBoundary>
