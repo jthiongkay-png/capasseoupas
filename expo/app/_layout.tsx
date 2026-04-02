@@ -10,7 +10,7 @@ import { FavouritesProvider } from '@/providers/FavouritesProvider';
 import { LocationProvider } from '@/providers/LocationProvider';
 import { useThemeColors } from '@/constants/colors';
 import ErrorBoundary from '@/components/ErrorBoundary';
-import { requestTrackingPermissionsAsync } from 'expo-tracking-transparency';
+
 
 void SplashScreen.preventAutoHideAsync();
 
@@ -128,6 +128,7 @@ export default function RootLayout() {
   const requestTracking = useCallback(async () => {
     if (Platform.OS !== 'web') {
       try {
+        const { requestTrackingPermissionsAsync } = await import('expo-tracking-transparency');
         const { status } = await requestTrackingPermissionsAsync();
         console.log('[Tracking] Permission status:', status);
       } catch (error) {
