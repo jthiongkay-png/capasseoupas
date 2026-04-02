@@ -8,7 +8,7 @@ import { usePlaces } from '@/providers/PlacesProvider';
 import { useAuth } from '@/providers/AuthProvider';
 import { useFavourites } from '@/providers/FavouritesProvider';
 
-const APP_VERSION = '2.0.1';
+const APP_VERSION = '2.0.2';
 
 interface SettingsRowProps {
   icon: React.ReactNode;
