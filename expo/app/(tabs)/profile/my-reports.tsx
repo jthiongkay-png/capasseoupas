@@ -17,11 +17,18 @@ export default function MyReportsScreen() {
   const { places, deletePlace } = usePlaces();
 
   const userPlaces = useMemo(() => {
-    return places.filter((p) => p.reportedBy === 'Communauté');
+    const filtered = places.filter((p) => p.reportedBy === 'Communauté');
+    console.log('[MyReports] Found', filtered.length, 'user reports');
+    return filtered;
   }, [places]);
 
   const handlePlacePress = useCallback((place: Place) => {
+    console.log('[MyReports] Navigating to place:', place.name);
     router.push(`/place/${place.id}` as any);
+  }, [router]);
+
+  const handleGoBack = useCallback(() => {
+    router.back();
   }, [router]);
 
   const handleDelete = useCallback((place: Place) => {
@@ -50,6 +57,7 @@ export default function MyReportsScreen() {
         style={styles.deleteRow}
         onPress={() => handleDelete(item)}
         activeOpacity={0.7}
+        testID={`delete-report-${item.id}`}
       >
         <Trash2 size={14} color="#FF453A" strokeWidth={1.5} />
         <Text style={styles.deleteText}>Supprimer</Text>
@@ -62,9 +70,9 @@ export default function MyReportsScreen() {
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
-      <View style={[styles.container, { paddingTop: insets.top }]}>
+      <View style={[styles.container, { paddingTop: insets.top }]} testID="my-reports-screen">
         <View style={styles.topBar}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <TouchableOpacity onPress={handleGoBack} style={styles.backButton} testID="reports-back">
             <ArrowLeft size={20} color={colors.textPrimary} strokeWidth={1.5} />
           </TouchableOpacity>
           <Text style={styles.topTitle}>Mes signalements</Text>
@@ -163,6 +171,8 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   emptyTitle: {
     fontSize: 17,
@@ -173,7 +183,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   emptyText: {
     fontSize: 14,
     color: colors.textSecondary,
-    textAlign: 'center',
+    textAlign: 'center' as const,
     fontWeight: '400' as const,
     lineHeight: 20,
   },

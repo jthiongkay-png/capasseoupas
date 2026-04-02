@@ -1,11 +1,9 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import createContextHook from '@nkzw/create-context-hook';
-import { Place, PlaceCategory } from '@/types';
+import { supabase } from '@/lib/supabase';
+import { Place, PlaceCategory, DbPlace, dbPlaceToPlace } from '@/types';
 import { MOCK_PLACES } from '@/mocks/places';
-
-const STORAGE_KEY = 'capasseoupas_places';
 
 export const [PlacesProvider, usePlaces] = createContextHook(() => {
   const [places, setPlaces] = useState<Place[]>([]);
@@ -15,34 +13,31 @@ export const [PlacesProvider, usePlaces] = createContextHook(() => {
     queryKey: ['places'],
     queryFn: async () => {
       try {
-        const stored = await AsyncStorage.getItem(STORAGE_KEY);
-        if (stored) {
-          const parsed = JSON.parse(stored) as Place[];
-          console.log('[PlacesProvider] Loaded', parsed.length, 'places from storage');
-          return parsed;
+        const { data, error } = await supabase
+          .from('places')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.log('[PlacesProvider] Supabase error:', error.message);
+          console.log('[PlacesProvider] Falling back to mock data');
+          return MOCK_PLACES;
         }
+
+        if (data && data.length > 0) {
+          const mapped = (data as DbPlace[]).map(dbPlaceToPlace);
+          console.log('[PlacesProvider] Loaded', mapped.length, 'places from Supabase');
+          return mapped;
+        }
+
+        console.log('[PlacesProvider] No places in DB, using mock data');
+        return MOCK_PLACES;
       } catch (e) {
-        console.log('[PlacesProvider] Error loading places:', e);
+        console.log('[PlacesProvider] Exception loading places:', e);
+        return MOCK_PLACES;
       }
-      console.log('[PlacesProvider] Using mock places');
-      try {
-        await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(MOCK_PLACES));
-      } catch (e) {
-        console.log('[PlacesProvider] Error saving mock places:', e);
-      }
-      return MOCK_PLACES;
     },
     retry: 2,
-  });
-
-  const saveMutation = useMutation({
-    mutationFn: async (updatedPlaces: Place[]) => {
-      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updatedPlaces));
-      return updatedPlaces;
-    },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['places'] });
-    },
   });
 
   useEffect(() => {
@@ -51,45 +46,119 @@ export const [PlacesProvider, usePlaces] = createContextHook(() => {
     }
   }, [placesQuery.data]);
 
+  const addPlaceMutation = useMutation({
+    mutationFn: async (place: Place) => {
+      const { data, error } = await supabase
+        .from('places')
+        .insert({
+          name: place.name,
+          address: place.address,
+          category: place.category,
+          latitude: place.latitude,
+          longitude: place.longitude,
+          accepted: place.accepted,
+          reports_accepted: place.reportsAccepted,
+          reports_refused: place.reportsRefused,
+          last_report_date: place.lastReportDate,
+          reported_by: place.reportedBy,
+          reported_by_user_id: place.reportedByUserId ?? null,
+          phone: place.phone ?? null,
+          website: place.website ?? null,
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.log('[PlacesProvider] Error adding place:', error.message);
+        throw error;
+      }
+
+      const mapped = dbPlaceToPlace(data as DbPlace);
+      console.log('[PlacesProvider] Place added to Supabase:', mapped.name, mapped.id);
+      return mapped;
+    },
+    onSuccess: (newPlace) => {
+      setPlaces((prev) => [newPlace, ...prev]);
+      void queryClient.invalidateQueries({ queryKey: ['places'] });
+    },
+  });
+
+  const updateReportMutation = useMutation({
+    mutationFn: async ({ placeId, accepted }: { placeId: string; accepted: boolean }) => {
+      const current = places.find((p) => p.id === placeId);
+      if (!current) throw new Error('Place not found');
+
+      const newAccepted = accepted ? current.reportsAccepted + 1 : current.reportsAccepted;
+      const newRefused = accepted ? current.reportsRefused : current.reportsRefused + 1;
+      const total = newAccepted + newRefused;
+      const acceptRate = total > 0 ? (newAccepted / total) * 100 : 0;
+
+      const { error } = await supabase
+        .from('places')
+        .update({
+          reports_accepted: newAccepted,
+          reports_refused: newRefused,
+          accepted: acceptRate >= 90,
+          last_report_date: new Date().toISOString().split('T')[0],
+        })
+        .eq('id', placeId);
+
+      if (error) {
+        console.log('[PlacesProvider] Error updating report:', error.message);
+        throw error;
+      }
+
+      return { placeId, newAccepted, newRefused, isAccepted: acceptRate >= 90 };
+    },
+    onSuccess: ({ placeId, newAccepted, newRefused, isAccepted }) => {
+      setPlaces((prev) =>
+        prev.map((p) =>
+          p.id === placeId
+            ? {
+                ...p,
+                reportsAccepted: newAccepted,
+                reportsRefused: newRefused,
+                accepted: isAccepted,
+                lastReportDate: new Date().toISOString().split('T')[0],
+              }
+            : p
+        )
+      );
+    },
+  });
+
+  const deletePlaceMutation = useMutation({
+    mutationFn: async (placeId: string) => {
+      const { error } = await supabase
+        .from('places')
+        .delete()
+        .eq('id', placeId);
+
+      if (error) {
+        console.log('[PlacesProvider] Error deleting place:', error.message);
+        throw error;
+      }
+
+      console.log('[PlacesProvider] Place deleted from Supabase:', placeId);
+      return placeId;
+    },
+    onSuccess: (placeId) => {
+      setPlaces((prev) => prev.filter((p) => p.id !== placeId));
+      void queryClient.invalidateQueries({ queryKey: ['places'] });
+    },
+  });
+
   const addPlace = useCallback((place: Place) => {
-    setPlaces((prev) => {
-      const updated = [place, ...prev];
-      saveMutation.mutate(updated);
-      return updated;
-    });
-  }, [saveMutation]);
+    addPlaceMutation.mutate(place);
+  }, [addPlaceMutation]);
 
   const updatePlaceReport = useCallback((placeId: string, accepted: boolean) => {
-    setPlaces((prev) => {
-      const updated = prev.map((p) => {
-        if (p.id === placeId) {
-          const newAccepted = accepted ? p.reportsAccepted + 1 : p.reportsAccepted;
-          const newRefused = accepted ? p.reportsRefused : p.reportsRefused + 1;
-          const total = newAccepted + newRefused;
-          const acceptRate = total > 0 ? (newAccepted / total) * 100 : 0;
-          return {
-            ...p,
-            reportsAccepted: newAccepted,
-            reportsRefused: newRefused,
-            accepted: acceptRate >= 90,
-            lastReportDate: new Date().toISOString().split('T')[0],
-          };
-        }
-        return p;
-      });
-      saveMutation.mutate(updated);
-      return updated;
-    });
-  }, [saveMutation]);
+    updateReportMutation.mutate({ placeId, accepted });
+  }, [updateReportMutation]);
 
   const deletePlace = useCallback((placeId: string) => {
-    setPlaces((prev) => {
-      const updated = prev.filter((p) => p.id !== placeId);
-      saveMutation.mutate(updated);
-      return updated;
-    });
-    console.log('[PlacesProvider] Deleted place:', placeId);
-  }, [saveMutation]);
+    deletePlaceMutation.mutate(placeId);
+  }, [deletePlaceMutation]);
 
   const getPlaceById = useCallback(
     (id: string): Place | undefined => places.find((p) => p.id === id),

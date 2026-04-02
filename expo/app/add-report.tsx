@@ -1,12 +1,12 @@
 import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
-import { useRouter } from 'expo-router';
-import { Stack } from 'expo-router';
+import { useRouter, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MapPin, CheckCircle, XCircle, X, ChevronDown } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { useThemeColors, ThemeColors } from '@/constants/colors';
 import { usePlaces } from '@/providers/PlacesProvider';
+import { useAuth } from '@/providers/AuthProvider';
 import { PlaceCategory, CATEGORY_LABELS } from '@/types';
 
 interface NominatimResult {
@@ -36,6 +36,7 @@ export default function AddReportScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { addPlace } = usePlaces();
+  const { user } = useAuth();
   const colors = useThemeColors();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
@@ -50,6 +51,11 @@ export default function AddReportScreen() {
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleClose = useCallback(() => {
+    console.log('[AddReport] Closing report screen');
+    router.back();
+  }, [router]);
 
   const fetchSuggestions = useCallback(async (query: string) => {
     if (query.trim().length < 2) {
@@ -69,7 +75,7 @@ export default function AddReportScreen() {
       const data: NominatimResult[] = await res.json();
       setSuggestions(data);
       setShowSuggestions(data.length > 0);
-      console.log('[AddReport] Fetched suggestions:', data.length);
+      console.log('[AddReport] Fetched', data.length, 'suggestions for:', query);
     } catch (err: any) {
       if (err?.name === 'AbortError') {
         console.log('[AddReport] Suggestion fetch timed out');
@@ -113,7 +119,7 @@ export default function AddReportScreen() {
     setSuggestions([]);
     setShowSuggestions(false);
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    console.log('[AddReport] Selected:', placeName, formattedAddress);
+    console.log('[AddReport] Selected suggestion:', placeName, formattedAddress);
   }, []);
 
   useEffect(() => {
@@ -134,14 +140,15 @@ export default function AddReportScreen() {
       reportsAccepted: accepted ? 1 : 0,
       reportsRefused: accepted ? 0 : 1,
       lastReportDate: new Date().toISOString().split('T')[0],
-      reportedBy: 'Communauté',
+      reportedBy: user?.username ?? 'Communauté',
+      reportedByUserId: user?.id,
     };
 
     addPlace(newPlace);
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    console.log('[AddReport] Place added:', newPlace.name);
+    console.log('[AddReport] Place added successfully:', newPlace.name, newPlace.id);
     router.back();
-  }, [name, address, category, accepted, latitude, longitude, addPlace, router]);
+  }, [name, address, category, accepted, latitude, longitude, addPlace, router, user]);
 
   const handleSubmit = useCallback(() => {
     if (!name.trim()) {
@@ -149,7 +156,7 @@ export default function AddReportScreen() {
       return;
     }
     if (!address.trim()) {
-      Alert.alert('Information manquante', 'Veuillez entrer l\'adresse.');
+      Alert.alert('Information manquante', "Veuillez entrer l'adresse.");
       return;
     }
     if (accepted === null) {
@@ -170,7 +177,20 @@ export default function AddReportScreen() {
   const handleAcceptedPress = useCallback((value: boolean) => {
     setAccepted(value);
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    console.log('[AddReport] Amex accepted set to:', value);
   }, []);
+
+  const handleCategorySelect = useCallback((cat: PlaceCategory) => {
+    setCategory(cat);
+    setShowCategories(false);
+    console.log('[AddReport] Category selected:', cat);
+  }, []);
+
+  const toggleCategories = useCallback(() => {
+    setShowCategories((prev) => !prev);
+  }, []);
+
+  const isFormValid = name.trim().length > 0 && address.trim().length > 0 && accepted !== null;
 
   return (
     <>
@@ -178,9 +198,10 @@ export default function AddReportScreen() {
       <KeyboardAvoidingView
         style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        testID="add-report-screen"
       >
         <View style={[styles.topBar, { paddingTop: insets.top + 8 }]}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.closeButton}>
+          <TouchableOpacity onPress={handleClose} style={styles.closeButton} testID="add-report-close">
             <X size={20} color={colors.textPrimary} strokeWidth={1.5} />
           </TouchableOpacity>
           <Text style={styles.topTitle}>Nouveau signalement</Text>
@@ -195,7 +216,7 @@ export default function AddReportScreen() {
         >
           <View style={styles.heroSection}>
             <View style={styles.heroIcon}>
-              <MapPin size={24} color={colors.textPrimary} strokeWidth={1.5} />
+              <MapPin size={24} color="#006FCF" strokeWidth={1.5} />
             </View>
             <Text style={styles.heroTitle}>Signaler un lieu</Text>
             <Text style={styles.heroSubtitle}>Aidez la communauté en partageant votre expérience</Text>
@@ -231,6 +252,7 @@ export default function AddReportScreen() {
                       ]}
                       onPress={() => handleSelectSuggestion(item)}
                       activeOpacity={0.6}
+                      testID={`suggestion-${item.place_id}`}
                     >
                       <View style={styles.suggestionIcon}>
                         <MapPin size={14} color={colors.textSecondary} strokeWidth={1.5} />
@@ -262,8 +284,9 @@ export default function AddReportScreen() {
             <Text style={styles.label}>Catégorie</Text>
             <TouchableOpacity
               style={styles.selectButton}
-              onPress={() => setShowCategories(!showCategories)}
+              onPress={toggleCategories}
               activeOpacity={0.7}
+              testID="category-select"
             >
               <Text style={styles.selectText}>{CATEGORY_LABELS[category]}</Text>
               <ChevronDown size={18} color={colors.textSecondary} strokeWidth={1.5} />
@@ -274,8 +297,9 @@ export default function AddReportScreen() {
                   <TouchableOpacity
                     key={cat}
                     style={[styles.categoryOption, category === cat && styles.categoryOptionSelected]}
-                    onPress={() => { setCategory(cat); setShowCategories(false); }}
+                    onPress={() => handleCategorySelect(cat)}
                     activeOpacity={0.7}
+                    testID={`cat-option-${cat}`}
                   >
                     <Text style={[styles.categoryOptionText, category === cat && styles.categoryOptionTextSelected]}>
                       {CATEGORY_LABELS[cat]}
@@ -293,6 +317,7 @@ export default function AddReportScreen() {
                 style={styles.acceptButtonWrap}
                 onPress={() => handleAcceptedPress(true)}
                 activeOpacity={0.7}
+                testID="accept-yes"
               >
                 <View
                   style={[
@@ -311,6 +336,7 @@ export default function AddReportScreen() {
                 style={styles.acceptButtonWrap}
                 onPress={() => handleAcceptedPress(false)}
                 activeOpacity={0.7}
+                testID="accept-no"
               >
                 <View
                   style={[
@@ -329,9 +355,10 @@ export default function AddReportScreen() {
           </View>
 
           <TouchableOpacity
-            style={[styles.submitButtonWrap, (!name.trim() || !address.trim() || accepted === null) && styles.submitButtonDisabled]}
+            style={[styles.submitButtonWrap, !isFormValid && styles.submitButtonDisabled]}
             onPress={handleSubmit}
             activeOpacity={0.8}
+            disabled={!isFormValid}
             testID="submit-report"
           >
             <View style={styles.submitButton}>
@@ -339,7 +366,7 @@ export default function AddReportScreen() {
             </View>
           </TouchableOpacity>
 
-          <View style={{ height: 40 }} />
+          <View style={{ height: insets.bottom + 40 }} />
         </ScrollView>
       </KeyboardAvoidingView>
     </>
@@ -388,15 +415,15 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     marginBottom: 32,
   },
   heroIcon: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: colors.searchBg,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#EBF3FF',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 14,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: '#D6E6FF',
   },
   heroTitle: {
     fontSize: 22,
@@ -409,13 +436,14 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     color: colors.textSecondary,
     marginTop: 4,
     fontWeight: '400' as const,
+    textAlign: 'center' as const,
   },
   formSection: {
     marginBottom: 22,
   },
   label: {
     fontSize: 14,
-    fontWeight: '500' as const,
+    fontWeight: '600' as const,
     color: colors.textPrimary,
     marginBottom: 8,
   },
@@ -428,6 +456,11 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     color: colors.textPrimary,
     borderWidth: 1,
     borderColor: colors.border,
+  },
+  inputWithSuggestions: {
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
+    borderBottomColor: colors.border,
   },
   selectButton: {
     flexDirection: 'row',
@@ -443,6 +476,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   selectText: {
     fontSize: 15,
     color: colors.textPrimary,
+    fontWeight: '400' as const,
   },
   categoryGrid: {
     flexDirection: 'row',
@@ -459,8 +493,8 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderColor: colors.border,
   },
   categoryOptionSelected: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
+    backgroundColor: '#006FCF',
+    borderColor: '#006FCF',
   },
   categoryOptionText: {
     fontSize: 13,
@@ -469,6 +503,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   categoryOptionTextSelected: {
     color: '#FFFFFF',
+    fontWeight: '600' as const,
   },
   acceptRow: {
     flexDirection: 'row',
@@ -511,15 +546,16 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   acceptButtonTextActive: {
     color: '#FFFFFF',
+    fontWeight: '600' as const,
   },
   submitButtonWrap: {
-    borderRadius: 12,
+    borderRadius: 14,
     overflow: 'hidden',
     marginTop: 8,
   },
   submitButton: {
-    backgroundColor: colors.accent,
-    borderRadius: 12,
+    backgroundColor: '#006FCF',
+    borderRadius: 14,
     paddingVertical: 16,
     alignItems: 'center',
     justifyContent: 'center',
@@ -532,11 +568,6 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     fontWeight: '600' as const,
     color: '#FFFFFF',
   },
-  inputWithSuggestions: {
-    borderBottomLeftRadius: 0,
-    borderBottomRightRadius: 0,
-    borderBottomColor: colors.border,
-  },
   loadingRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -547,6 +578,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   loadingText: {
     fontSize: 13,
     color: colors.textTertiary,
+    fontWeight: '400' as const,
   },
   suggestionsContainer: {
     backgroundColor: colors.surface,
@@ -588,5 +620,6 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     fontSize: 12,
     color: colors.textSecondary,
     marginTop: 2,
+    fontWeight: '400' as const,
   },
 });

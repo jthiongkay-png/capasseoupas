@@ -44,10 +44,12 @@ export default function FavouritesScreen() {
     } else if (statusFilter === 'refused') {
       filtered = filtered.filter((p) => !p.accepted);
     }
+    console.log('[Favourites] Displaying', filtered.length, 'favourite places');
     return filtered;
   }, [places, favouriteIds, selectedCategory, statusFilter]);
 
   const handlePlacePress = useCallback((place: Place) => {
+    console.log('[Favourites] Navigating to place:', place.name);
     router.push(`/place/${place.id}` as any);
   }, [router]);
 
@@ -58,6 +60,10 @@ export default function FavouritesScreen() {
       setSelectedCategory((prev) => (prev === key ? null : key));
     }
   }, []);
+
+  const handleGoBack = useCallback(() => {
+    router.back();
+  }, [router]);
 
   const renderPlace = useCallback(({ item }: { item: Place }) => (
     <PlaceCard place={item} onPress={handlePlacePress} />
@@ -99,9 +105,9 @@ export default function FavouritesScreen() {
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
-      <View style={[styles.container, { paddingTop: insets.top }]}>
+      <View style={[styles.container, { paddingTop: insets.top }]} testID="favourites-screen">
         <View style={styles.topBar}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <TouchableOpacity onPress={handleGoBack} style={styles.backButton} testID="favourites-back">
             <ArrowLeft size={20} color={colors.textPrimary} strokeWidth={1.5} />
           </TouchableOpacity>
           <Text style={styles.topTitle}>Mes favoris</Text>
@@ -194,6 +200,8 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   emptyTitle: {
     fontSize: 17,
@@ -204,7 +212,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   emptyText: {
     fontSize: 14,
     color: colors.textSecondary,
-    textAlign: 'center',
+    textAlign: 'center' as const,
     fontWeight: '400' as const,
     lineHeight: 20,
   },

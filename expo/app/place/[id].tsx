@@ -11,7 +11,7 @@ import { useFavourites } from '@/providers/FavouritesProvider';
 import { CATEGORY_LABELS, PlaceCategory } from '@/types';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const HERO_HEIGHT = 220;
+const HERO_HEIGHT = 240;
 
 const CATEGORY_PHOTOS: Record<PlaceCategory, string> = {
   restaurant: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&q=80',
@@ -38,17 +38,27 @@ export default function PlaceDetailScreen() {
   const styles = useMemo(() => createStyles(colors), [colors]);
   const scrollY = useRef(new Animated.Value(0)).current;
 
-  const place = useMemo(() => getPlaceById(id ?? ''), [getPlaceById, id]);
+  const place = useMemo(() => {
+    const found = getPlaceById(id ?? '');
+    console.log('[PlaceDetail] Loading place:', id, found ? found.name : 'not found');
+    return found;
+  }, [getPlaceById, id]);
 
   const totalReports = place ? place.reportsAccepted + place.reportsRefused : 0;
   const acceptRate = totalReports > 0 && place ? Math.round((place.reportsAccepted / totalReports) * 100) : 0;
   const isNotAccepted = totalReports > 0 && acceptRate < 90;
+
+  const handleGoBack = useCallback(() => {
+    router.back();
+  }, [router]);
 
   const handleDirections = useCallback(() => {
     if (!place) return;
     const lat = place.latitude;
     const lng = place.longitude;
     const label = encodeURIComponent(place.name);
+
+    console.log('[PlaceDetail] Opening directions for:', place.name);
 
     if (Platform.OS === 'ios') {
       Alert.alert(
@@ -95,7 +105,6 @@ export default function PlaceDetailScreen() {
     } else {
       void Linking.openURL(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`);
     }
-    console.log('[PlaceDetail] Opening directions for', place.name);
   }, [place]);
 
   const handleCall = useCallback(() => {
@@ -104,6 +113,7 @@ export default function PlaceDetailScreen() {
       Alert.alert('Numéro indisponible', "Aucun numéro de téléphone n'est enregistré pour cet établissement.");
       return;
     }
+    console.log('[PlaceDetail] Call action for:', place.name, place.phone);
     Alert.alert(
       place.name,
       place.phone,
@@ -120,7 +130,6 @@ export default function PlaceDetailScreen() {
         { text: 'Annuler', style: 'cancel' },
       ]
     );
-    console.log('[PlaceDetail] Call action for', place.name, place.phone);
   }, [place]);
 
   const handleWebsite = useCallback(() => {
@@ -129,30 +138,30 @@ export default function PlaceDetailScreen() {
       Alert.alert('Site web indisponible', "Aucun site web n'est enregistré pour cet établissement.");
       return;
     }
+    console.log('[PlaceDetail] Opening website for:', place.name);
     void Linking.openURL(place.website).catch(() => {
       console.log('[PlaceDetail] Cannot open website:', place.website);
     });
-    console.log('[PlaceDetail] Opening website for', place.name);
   }, [place]);
 
   const handleShare = useCallback(async () => {
     if (!place) return;
     try {
+      console.log('[PlaceDetail] Sharing place:', place.name);
       await Share.share({
-        message: `${place.name} - ${place.address}\nStatut Amex : ${place.accepted ? 'Acceptée' : 'Refusée'}\nTaux d'acceptation : ${Math.round((place.reportsAccepted / Math.max(place.reportsAccepted + place.reportsRefused, 1)) * 100)}%`,
+        message: `${place.name} - ${place.address}\nStatut Amex : ${place.accepted ? 'Acceptée' : 'Refusée'}\nTaux d'acceptation : ${Math.round((place.reportsAccepted / Math.max(place.reportsAccepted + place.reportsRefused, 1)) * 100)}%\n\nVia Capasseoupas`,
       });
-      console.log('[PlaceDetail] Shared', place.name);
     } catch (error) {
       console.log('[PlaceDetail] Share error:', error);
     }
   }, [place]);
 
-  const handleReport = useCallback((accepted: boolean) => {
+  const handleReport = useCallback((reportAccepted: boolean) => {
     if (!place) return;
-    updatePlaceReport(place.id, accepted);
-    incrementReports();
+    updatePlaceReport(place.id, reportAccepted);
+    void incrementReports();
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    console.log('[PlaceDetail] Reported', place.name, 'as', accepted ? 'accepted' : 'refused');
+    console.log('[PlaceDetail] Reported', place.name, 'as', reportAccepted ? 'accepted' : 'refused');
   }, [place, updatePlaceReport, incrementReports]);
 
   const handleDelete = useCallback(() => {
@@ -168,7 +177,7 @@ export default function PlaceDetailScreen() {
           onPress: () => {
             deletePlace(place.id);
             void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-            console.log('[PlaceDetail] Deleted place:', place.name);
+            console.log('[PlaceDetail] Deleted place:', place.name, place.id);
             router.back();
           },
         },
@@ -182,11 +191,12 @@ export default function PlaceDetailScreen() {
     if (!place) return;
     toggleFavourite(place.id);
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    console.log('[PlaceDetail] Toggled favourite for', place.name);
-  }, [place, toggleFavourite]);
+    console.log('[PlaceDetail] Toggled favourite for:', place.name, '-> now:', !placeIsFav);
+  }, [place, toggleFavourite, placeIsFav]);
 
   const handleFlagContent = useCallback(() => {
     if (!place) return;
+    console.log('[PlaceDetail] Opening flag dialog for:', place.name);
     Alert.alert(
       'Signaler un contenu',
       'Pourquoi souhaitez-vous signaler ce lieu ?',
@@ -199,7 +209,7 @@ export default function PlaceDetailScreen() {
               'Merci pour votre signalement. Notre équipe examinera ce contenu dans les plus brefs délais. Vous pouvez aussi nous contacter à contact@capasseoupas.app',
             );
             void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            console.log('[PlaceDetail] Flagged place as incorrect:', place.name);
+            console.log('[PlaceDetail] Flagged as incorrect:', place.name);
           },
         },
         {
@@ -210,7 +220,7 @@ export default function PlaceDetailScreen() {
               'Merci pour votre signalement. Notre équipe examinera ce contenu dans les plus brefs délais. Vous pouvez aussi nous contacter à contact@capasseoupas.app',
             );
             void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            console.log('[PlaceDetail] Flagged place as inappropriate:', place.name);
+            console.log('[PlaceDetail] Flagged as inappropriate:', place.name);
           },
         },
         {
@@ -221,7 +231,7 @@ export default function PlaceDetailScreen() {
               'Merci pour votre signalement. Notre équipe examinera ce contenu dans les plus brefs délais.',
             );
             void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            console.log('[PlaceDetail] Flagged place as duplicate:', place.name);
+            console.log('[PlaceDetail] Flagged as duplicate:', place.name);
           },
         },
         { text: 'Annuler', style: 'cancel' },
@@ -239,14 +249,16 @@ export default function PlaceDetailScreen() {
     return (
       <>
         <Stack.Screen options={{ headerShown: false }} />
-        <View style={[styles.container, { paddingTop: insets.top }]}>
+        <View style={[styles.container, { paddingTop: insets.top }]} testID="place-not-found">
           <View style={styles.topBar}>
-            <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <TouchableOpacity onPress={handleGoBack} style={styles.backButton} testID="place-back-not-found">
               <ArrowLeft size={20} color={colors.textPrimary} strokeWidth={1.5} />
             </TouchableOpacity>
           </View>
           <View style={styles.notFound}>
-            <Text style={styles.notFoundText}>Lieu introuvable</Text>
+            <Text style={styles.notFoundEmoji}>📍</Text>
+            <Text style={styles.notFoundTitle}>Lieu introuvable</Text>
+            <Text style={styles.notFoundText}>Ce lieu a peut-être été supprimé ou n'existe pas.</Text>
           </View>
         </View>
       </>
@@ -264,10 +276,10 @@ export default function PlaceDetailScreen() {
       </Animated.View>
 
       <View style={[styles.floatingNav, { top: insets.top + 8 }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.navButton}>
+        <TouchableOpacity onPress={handleGoBack} style={styles.navButton} testID="place-back">
           <ArrowLeft size={20} color="#FFF" strokeWidth={2} />
         </TouchableOpacity>
-        <TouchableOpacity onPress={handleDelete} style={styles.navButton}>
+        <TouchableOpacity onPress={handleDelete} style={styles.navButton} testID="place-delete-nav">
           <Trash2 size={18} color="#FFF" strokeWidth={2} />
         </TouchableOpacity>
       </View>
@@ -280,6 +292,7 @@ export default function PlaceDetailScreen() {
           { useNativeDriver: true }
         )}
         scrollEventThrottle={16}
+        testID="place-detail-scroll"
       >
         <View style={styles.heroImageContainer}>
           <Image
@@ -309,7 +322,12 @@ export default function PlaceDetailScreen() {
             </View>
             <View style={styles.heroNameRow}>
               <Text style={styles.heroName}>{place.name}</Text>
-              <TouchableOpacity onPress={handleToggleFavourite} style={styles.favButton} activeOpacity={0.7}>
+              <TouchableOpacity
+                onPress={handleToggleFavourite}
+                style={styles.favButton}
+                activeOpacity={0.7}
+                testID="place-toggle-fav"
+              >
                 <Star size={20} color={placeIsFav ? '#FFB800' : 'rgba(255,255,255,0.7)'} fill={placeIsFav ? '#FFB800' : 'transparent'} strokeWidth={2} />
               </TouchableOpacity>
             </View>
@@ -322,27 +340,27 @@ export default function PlaceDetailScreen() {
         </View>
 
         <View style={styles.actionBar}>
-          <TouchableOpacity style={styles.actionItem} activeOpacity={0.7} onPress={handleDirections}>
+          <TouchableOpacity style={styles.actionItem} activeOpacity={0.7} onPress={handleDirections} testID="place-directions">
             <View style={styles.actionIcon}>
-              <Navigation size={18} color={colors.primary} strokeWidth={1.5} />
+              <Navigation size={18} color="#006FCF" strokeWidth={1.5} />
             </View>
             <Text style={styles.actionLabel}>Itinéraire</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionItem} activeOpacity={0.7} onPress={handleCall}>
+          <TouchableOpacity style={styles.actionItem} activeOpacity={0.7} onPress={handleCall} testID="place-call">
             <View style={[styles.actionIcon, !place.phone && styles.actionIconDisabled]}>
-              <Phone size={18} color={place.phone ? colors.primary : colors.textTertiary} strokeWidth={1.5} />
+              <Phone size={18} color={place.phone ? '#006FCF' : colors.textTertiary} strokeWidth={1.5} />
             </View>
             <Text style={[styles.actionLabel, !place.phone && styles.actionLabelDisabled]}>Appeler</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionItem} activeOpacity={0.7} onPress={handleWebsite}>
+          <TouchableOpacity style={styles.actionItem} activeOpacity={0.7} onPress={handleWebsite} testID="place-website">
             <View style={[styles.actionIcon, !place.website && styles.actionIconDisabled]}>
-              <Globe size={18} color={place.website ? colors.primary : colors.textTertiary} strokeWidth={1.5} />
+              <Globe size={18} color={place.website ? '#006FCF' : colors.textTertiary} strokeWidth={1.5} />
             </View>
             <Text style={[styles.actionLabel, !place.website && styles.actionLabelDisabled]}>Site web</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionItem} activeOpacity={0.7} onPress={handleShare}>
+          <TouchableOpacity style={styles.actionItem} activeOpacity={0.7} onPress={handleShare} testID="place-share">
             <View style={styles.actionIcon}>
-              <Share2 size={18} color={colors.primary} strokeWidth={1.5} />
+              <Share2 size={18} color="#006FCF" strokeWidth={1.5} />
             </View>
             <Text style={styles.actionLabel}>Partager</Text>
           </TouchableOpacity>
@@ -393,21 +411,11 @@ export default function PlaceDetailScreen() {
 
           <View style={styles.breakdownContainer}>
             <View style={styles.breakdownHeader}>
-              <Text style={styles.breakdownTitle}>Répartition</Text>
+              <Text style={styles.breakdownTitle}>Répartition des signalements</Text>
             </View>
             <View style={styles.breakdownBar}>
-              <View
-                style={[
-                  styles.breakdownFillAccepted,
-                  { flex: place.reportsAccepted || 0.01 },
-                ]}
-              />
-              <View
-                style={[
-                  styles.breakdownFillRefused,
-                  { flex: place.reportsRefused || 0.01 },
-                ]}
-              />
+              <View style={[styles.breakdownFillAccepted, { flex: place.reportsAccepted || 0.01 }]} />
+              <View style={[styles.breakdownFillRefused, { flex: place.reportsRefused || 0.01 }]} />
             </View>
             <View style={styles.breakdownLabels}>
               <View style={styles.breakdownLabelRow}>
@@ -443,6 +451,15 @@ export default function PlaceDetailScreen() {
               {isNotAccepted ? 'Non accepté' : place.accepted ? 'Acceptée' : 'Refusée'}
             </Text>
           </View>
+          {place.phone && (
+            <>
+              <View style={styles.infoSeparator} />
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>Téléphone</Text>
+                <Text style={styles.infoValue}>{place.phone}</Text>
+              </View>
+            </>
+          )}
         </View>
 
         <View style={styles.card}>
@@ -453,6 +470,7 @@ export default function PlaceDetailScreen() {
               style={styles.contributeButtonWrap}
               onPress={() => handleReport(true)}
               activeOpacity={0.8}
+              testID="place-report-accepted"
             >
               <View style={styles.contributeButtonAccepted}>
                 <ThumbsUp size={18} color="#FFF" strokeWidth={1.5} />
@@ -463,6 +481,7 @@ export default function PlaceDetailScreen() {
               style={styles.contributeButtonWrap}
               onPress={() => handleReport(false)}
               activeOpacity={0.8}
+              testID="place-report-refused"
             >
               <View style={styles.contributeButtonRefused}>
                 <ThumbsDown size={18} color="#FFF" strokeWidth={1.5} />
@@ -486,6 +505,7 @@ export default function PlaceDetailScreen() {
           style={styles.deleteButton}
           onPress={handleDelete}
           activeOpacity={0.7}
+          testID="place-delete-bottom"
         >
           <Trash2 size={16} color="#FF453A" strokeWidth={1.5} />
           <Text style={styles.deleteButtonText}>Supprimer ce lieu</Text>
@@ -494,7 +514,7 @@ export default function PlaceDetailScreen() {
         <View style={styles.disclaimerContainer}>
           <Info size={14} color={colors.textTertiary} strokeWidth={1.5} />
           <Text style={styles.disclaimerText}>
-            Ça Passe ou Pas ne peut être tenu responsable des informations enregistrées par les utilisateurs sur l'application. Les données sont fournies à titre indicatif et peuvent ne pas refléter la situation actuelle de l'établissement.
+            Capasseoupas ne peut être tenu responsable des informations enregistrées par les utilisateurs. Les données sont fournies à titre indicatif et peuvent ne pas refléter la situation actuelle de l'établissement.
           </Text>
         </View>
 
@@ -516,9 +536,9 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     paddingBottom: 8,
   },
   backButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: colors.searchBg,
     alignItems: 'center',
     justifyContent: 'center',
@@ -529,10 +549,23 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 40,
+  },
+  notFoundEmoji: {
+    fontSize: 48,
+    marginBottom: 16,
+  },
+  notFoundTitle: {
+    fontSize: 20,
+    fontWeight: '700' as const,
+    color: colors.textPrimary,
+    marginBottom: 8,
   },
   notFoundText: {
-    fontSize: 16,
+    fontSize: 14,
     color: colors.textSecondary,
+    textAlign: 'center' as const,
+    fontWeight: '400' as const,
   },
   stickyHeader: {
     position: 'absolute',
@@ -562,9 +595,9 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     justifyContent: 'space-between',
   },
   navButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: 'rgba(0,0,0,0.45)',
     alignItems: 'center',
     justifyContent: 'center',
@@ -580,7 +613,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   heroOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.35)',
+    backgroundColor: 'rgba(0,0,0,0.38)',
   },
   heroContent: {
     ...StyleSheet.absoluteFillObject,
@@ -601,13 +634,13 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderRadius: 16,
   },
   statusChipAccepted: {
-    backgroundColor: 'rgba(52, 199, 89, 0.2)',
+    backgroundColor: 'rgba(52, 199, 89, 0.25)',
   },
   statusChipRefused: {
-    backgroundColor: 'rgba(255, 69, 58, 0.2)',
+    backgroundColor: 'rgba(255, 69, 58, 0.25)',
   },
   statusChipNotAccepted: {
-    backgroundColor: 'rgba(255, 149, 0, 0.2)',
+    backgroundColor: 'rgba(255, 149, 0, 0.25)',
   },
   statusChipTextAccepted: {
     fontSize: 12,
@@ -638,9 +671,9 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     flex: 1,
   },
   favButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: 'rgba(0,0,0,0.3)',
     alignItems: 'center',
     justifyContent: 'center',
@@ -693,7 +726,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   actionLabel: {
     fontSize: 11,
     fontWeight: '500' as const,
-    color: colors.primary,
+    color: '#006FCF',
   },
   actionIconDisabled: {
     opacity: 0.5,
@@ -705,7 +738,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     backgroundColor: colors.surface,
     marginHorizontal: 16,
     marginTop: 12,
-    borderRadius: 14,
+    borderRadius: 16,
     padding: 16,
     borderWidth: 1,
     borderColor: colors.border,
@@ -734,6 +767,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     fontSize: 12,
     color: colors.textTertiary,
     marginTop: 4,
+    fontWeight: '400' as const,
   },
   warningBanner: {
     flexDirection: 'row',
@@ -741,7 +775,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     marginHorizontal: 16,
     marginTop: 12,
     backgroundColor: colors.warningLight,
-    borderRadius: 14,
+    borderRadius: 16,
     padding: 16,
     borderWidth: 1,
     borderColor: colors.warning,
@@ -789,7 +823,9 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     color: colors.textSecondary,
     fontWeight: '400' as const,
   },
-  breakdownContainer: {},
+  breakdownContainer: {
+    marginTop: 0,
+  },
   breakdownHeader: {
     marginBottom: 10,
   },

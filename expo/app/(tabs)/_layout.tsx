@@ -22,7 +22,7 @@ export default function TabLayout() {
         tabBarLabelStyle: {
           fontSize: 10,
           fontWeight: '500' as const,
-          letterSpacing: 0.2,
+          letterSpacing: 0.3,
         },
       }}
     >

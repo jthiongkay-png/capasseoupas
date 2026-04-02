@@ -14,7 +14,14 @@ import { requestTrackingPermissionsAsync } from 'expo-tracking-transparency';
 
 void SplashScreen.preventAutoHideAsync();
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 2,
+      staleTime: 1000 * 60 * 5,
+    },
+  },
+});
 
 function useProtectedRoute() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -24,7 +31,11 @@ function useProtectedRoute() {
   useEffect(() => {
     if (isLoading) return;
 
-    const inAuthGroup = segments[0] === 'welcome' || segments[0] === 'login' || segments[0] === 'signup' || segments[0] === 'forgot-password';
+    const inAuthGroup =
+      segments[0] === 'welcome' ||
+      segments[0] === 'login' ||
+      segments[0] === 'signup' ||
+      segments[0] === 'forgot-password';
 
     if (!isAuthenticated && !inAuthGroup) {
       console.log('[Auth] Not authenticated, redirecting to welcome');
@@ -48,6 +59,7 @@ function RootLayoutNav() {
         contentStyle: { backgroundColor: colors.background },
         headerStyle: { backgroundColor: colors.background },
         headerTintColor: colors.textPrimary,
+        headerShadowVisible: false,
       }}
     >
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
@@ -98,14 +110,14 @@ function RootLayoutNav() {
         name="terms"
         options={{
           headerShown: false,
-          animation: Platform.OS === 'web' ? 'none' : 'fade',
+          animation: Platform.OS === 'web' ? 'none' : 'slide_from_right',
         }}
       />
       <Stack.Screen
         name="privacy"
         options={{
           headerShown: false,
-          animation: Platform.OS === 'web' ? 'none' : 'fade',
+          animation: Platform.OS === 'web' ? 'none' : 'slide_from_right',
         }}
       />
     </Stack>
@@ -125,8 +137,11 @@ export default function RootLayout() {
   }, []);
 
   useEffect(() => {
-    void SplashScreen.hideAsync();
-    void requestTracking();
+    const init = async () => {
+      await SplashScreen.hideAsync();
+      await requestTracking();
+    };
+    void init();
   }, [requestTracking]);
 
   return (

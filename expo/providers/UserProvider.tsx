@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import createContextHook from '@nkzw/create-context-hook';
@@ -12,7 +12,9 @@ function generateId() {
 
 const DEFAULT_USER: User = {
   id: generateId(),
+  email: '',
   username: 'Explorateur',
+  authMethod: 'email',
   reportsCount: 0,
   joinDate: new Date().toISOString().split('T')[0],
   level: 'Débutant',
@@ -77,5 +79,10 @@ export const [UserProvider, useUser] = createContextHook(() => {
     });
   }, [saveMutation]);
 
-  return { user, incrementReports, updateUsername, isLoading: userQuery.isLoading };
+  return useMemo(() => ({
+    user,
+    incrementReports,
+    updateUsername,
+    isLoading: userQuery.isLoading,
+  }), [user, incrementReports, updateUsername, userQuery.isLoading]);
 });

@@ -1,11 +1,11 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { View, Text, StyleSheet, FlatList, TextInput, ScrollView, ActivityIndicator, TouchableOpacity, Keyboard } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TextInput, ScrollView, TouchableOpacity, Keyboard } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Search, Navigation, MapPin, X } from 'lucide-react-native';
 import { useThemeColors, ThemeColors } from '@/constants/colors';
 import { useFilteredPlaces } from '@/providers/PlacesProvider';
-import { Place, PlaceCategory, CATEGORY_LABELS } from '@/types';
+import { Place, PlaceCategory } from '@/types';
 import PlaceCard from '@/components/PlaceCard';
 import CategoryPill from '@/components/CategoryPill';
 import FloatingActionButton from '@/components/FloatingActionButton';
@@ -52,10 +52,12 @@ export default function ExploreScreen() {
   }, [places, getDistanceFromUser]);
 
   const handlePlacePress = useCallback((place: Place) => {
+    console.log('[Explore] Navigating to place:', place.name);
     router.push(`/place/${place.id}` as any);
   }, [router]);
 
   const handleAddReport = useCallback(() => {
+    console.log('[Explore] Opening add report');
     router.push('/add-report' as any);
   }, [router]);
 
@@ -65,6 +67,11 @@ export default function ExploreScreen() {
     } else {
       setSelectedCategory((prev) => (prev === key ? null : key));
     }
+  }, []);
+
+  const handleClearSearch = useCallback(() => {
+    setSearch('');
+    Keyboard.dismiss();
   }, []);
 
   const renderPlace = useCallback(({ item }: { item: { place: Place; distance: number | null } }) => (
@@ -77,7 +84,10 @@ export default function ExploreScreen() {
     <View>
       <View style={styles.header}>
         <Text style={styles.title}>Explorer</Text>
-        <Text style={styles.subtitle}>{placesWithDistance.length} lieux trouvés{userLocation ? ' · triés par distance' : ''}</Text>
+        <Text style={styles.subtitle}>
+          {placesWithDistance.length} lieu{placesWithDistance.length > 1 ? 'x' : ''} trouvé{placesWithDistance.length > 1 ? 's' : ''}
+          {userLocation ? ' · triés par distance' : ''}
+        </Text>
       </View>
 
       <View style={styles.searchContainer}>
@@ -94,7 +104,11 @@ export default function ExploreScreen() {
             testID="search-input"
           />
           {search.length > 0 && (
-            <TouchableOpacity onPress={() => { setSearch(''); }} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+            <TouchableOpacity
+              onPress={handleClearSearch}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              testID="clear-search"
+            >
               <View style={styles.clearButton}>
                 <X size={14} color={colors.textTertiary} strokeWidth={2} />
               </View>
@@ -135,6 +149,7 @@ export default function ExploreScreen() {
           style={styles.closestCard}
           onPress={() => handlePlacePress(placesWithDistance[0].place)}
           activeOpacity={0.8}
+          testID="closest-place"
         >
           <View style={styles.closestBadge}>
             <Navigation size={14} color="#FFFFFF" strokeWidth={2} />
@@ -154,10 +169,10 @@ export default function ExploreScreen() {
         </TouchableOpacity>
       )}
     </View>
-  ), [placesWithDistance, userLocation, search, statusFilter, selectedCategory, colors, styles, formatDistance, handlePlacePress, handleCategoryPress]);
+  ), [placesWithDistance, userLocation, search, statusFilter, selectedCategory, colors, styles, formatDistance, handlePlacePress, handleCategoryPress, handleClearSearch]);
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View style={[styles.container, { paddingTop: insets.top }]} testID="explore-screen">
       <FlatList
         data={placesWithDistance}
         renderItem={renderPlace}
@@ -270,7 +285,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   emptyText: {
     fontSize: 14,
     color: colors.textSecondary,
-    textAlign: 'center',
+    textAlign: 'center' as const,
     fontWeight: '400' as const,
   },
   closestCard: {

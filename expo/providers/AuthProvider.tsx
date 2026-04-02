@@ -1,209 +1,278 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import createContextHook from '@nkzw/create-context-hook';
-import { User } from '@/types';
-
-const AUTH_KEY = 'capasseoupas_auth';
-const USERS_KEY = 'capasseoupas_users';
-
-function generateId() {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2);
-}
-
-function getLevel(count: number): string {
-  if (count >= 50) return 'Ambassadeur';
-  if (count >= 25) return 'Expert';
-  if (count >= 10) return 'Contributeur';
-  if (count >= 3) return 'Explorateur';
-  return 'Débutant';
-}
+import { supabase } from '@/lib/supabase';
+import { User, Profile, profileToUser } from '@/types';
+import type { Session } from '@supabase/supabase-js';
 
 export const [AuthProvider, useAuth] = createContextHook(() => {
   const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const queryClient = useQueryClient();
 
-  const authQuery = useQuery({
-    queryKey: ['auth'],
-    queryFn: async () => {
-      try {
-        const stored = await AsyncStorage.getItem(AUTH_KEY);
-        if (stored) {
-          const parsed = JSON.parse(stored) as User;
-          console.log('[AuthProvider] Loaded authenticated user:', parsed.username);
-          return parsed;
-        }
-      } catch (e) {
-        console.log('[AuthProvider] Error loading auth:', e);
+  const fetchProfile = useCallback(async (userId: string, email: string): Promise<User | null> => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (error) {
+        console.log('[AuthProvider] Error fetching profile:', error.message);
+        return null;
       }
+
+      const profile = data as Profile;
+      const mapped = profileToUser(profile, email);
+      console.log('[AuthProvider] Profile loaded for:', mapped.username);
+      return mapped;
+    } catch (e) {
+      console.log('[AuthProvider] Exception fetching profile:', e);
       return null;
-    },
-  });
+    }
+  }, []);
 
   useEffect(() => {
-    if (authQuery.isFetched) {
-      setUser(authQuery.data ?? null);
-      setIsLoading(false);
-    }
-  }, [authQuery.data, authQuery.isFetched]);
+    let mounted = true;
 
-  const saveMutation = useMutation({
-    mutationFn: async (updatedUser: User) => {
-      await AsyncStorage.setItem(AUTH_KEY, JSON.stringify(updatedUser));
-      const usersRaw = await AsyncStorage.getItem(USERS_KEY);
-      const users: User[] = usersRaw ? JSON.parse(usersRaw) : [];
-      const idx = users.findIndex((u) => u.id === updatedUser.id);
-      if (idx >= 0) {
-        users[idx] = updatedUser;
-      } else {
-        users.push(updatedUser);
+    const initAuth = async () => {
+      try {
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        console.log('[AuthProvider] Initial session:', currentSession ? 'found' : 'none');
+
+        if (currentSession?.user && mounted) {
+          setSession(currentSession);
+          const profile = await fetchProfile(
+            currentSession.user.id,
+            currentSession.user.email ?? ''
+          );
+          if (mounted) {
+            setUser(profile);
+          }
+        }
+      } catch (e) {
+        console.log('[AuthProvider] Init error:', e);
+      } finally {
+        if (mounted) {
+          setIsLoading(false);
+        }
       }
-      await AsyncStorage.setItem(USERS_KEY, JSON.stringify(users));
-      return updatedUser;
-    },
-  });
+    };
+
+    void initAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
+      console.log('[AuthProvider] Auth state changed:', event);
+
+      if (!mounted) return;
+
+      setSession(newSession);
+
+      if (newSession?.user) {
+        const profile = await fetchProfile(
+          newSession.user.id,
+          newSession.user.email ?? ''
+        );
+        if (mounted) {
+          setUser(profile);
+          setIsLoading(false);
+        }
+      } else {
+        if (mounted) {
+          setUser(null);
+          setIsLoading(false);
+        }
+      }
+    });
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, [fetchProfile]);
 
   const signUpWithEmail = useCallback(async (email: string, password: string, username: string) => {
-    const usersRaw = await AsyncStorage.getItem(USERS_KEY);
-    const users: User[] = usersRaw ? JSON.parse(usersRaw) : [];
-    const existing = users.find((u) => u.email.toLowerCase() === email.toLowerCase());
-    if (existing) {
-      throw new Error('Un compte existe déjà avec cette adresse e-mail.');
-    }
-    const usernameExists = users.find((u) => u.username.toLowerCase() === username.toLowerCase());
-    if (usernameExists) {
+    console.log('[AuthProvider] Signing up with email:', email);
+
+    const { data: existingProfiles } = await supabase
+      .from('profiles')
+      .select('username')
+      .ilike('username', username.trim());
+
+    if (existingProfiles && existingProfiles.length > 0) {
       throw new Error('Ce nom d\'utilisateur est déjà pris.');
     }
 
-    const newUser: User = {
-      id: generateId(),
+    const { data, error } = await supabase.auth.signUp({
       email: email.toLowerCase().trim(),
-      username: username.trim(),
       password,
-      authMethod: 'email',
-      reportsCount: 0,
-      joinDate: new Date().toISOString().split('T')[0],
-      level: 'Débutant',
-    };
+      options: {
+        data: {
+          username: username.trim(),
+          auth_method: 'email',
+        },
+      },
+    });
 
-    users.push(newUser);
-    await AsyncStorage.setItem(USERS_KEY, JSON.stringify(users));
-    await AsyncStorage.setItem(AUTH_KEY, JSON.stringify(newUser));
-    setUser(newUser);
-    void queryClient.invalidateQueries({ queryKey: ['auth'] });
-    console.log('[AuthProvider] Signed up with email:', email);
-    return newUser;
-  }, [queryClient]);
+    if (error) {
+      console.log('[AuthProvider] Signup error:', error.message);
+      if (error.message.includes('already registered')) {
+        throw new Error('Un compte existe déjà avec cette adresse e-mail.');
+      }
+      throw new Error(error.message);
+    }
+
+    if (data.user) {
+      console.log('[AuthProvider] Signup successful, user id:', data.user.id);
+      const profile = await fetchProfile(data.user.id, data.user.email ?? email);
+      if (profile) {
+        setUser(profile);
+      }
+      void queryClient.invalidateQueries({ queryKey: ['auth'] });
+      return profile;
+    }
+
+    return null;
+  }, [fetchProfile, queryClient]);
 
   const signInWithEmail = useCallback(async (email: string, password: string) => {
-    const usersRaw = await AsyncStorage.getItem(USERS_KEY);
-    const users: User[] = usersRaw ? JSON.parse(usersRaw) : [];
-    const found = users.find(
-      (u) => u.email.toLowerCase() === email.toLowerCase().trim() && u.password === password
-    );
-    if (!found) {
+    console.log('[AuthProvider] Signing in with email:', email);
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: email.toLowerCase().trim(),
+      password,
+    });
+
+    if (error) {
+      console.log('[AuthProvider] Sign in error:', error.message);
       throw new Error('Identifiants incorrects. Vérifiez votre e-mail et mot de passe.');
     }
-    await AsyncStorage.setItem(AUTH_KEY, JSON.stringify(found));
-    setUser(found);
-    void queryClient.invalidateQueries({ queryKey: ['auth'] });
-    console.log('[AuthProvider] Signed in with email:', email);
-    return found;
-  }, [queryClient]);
 
-  const signInWithApple = useCallback(async (username: string) => {
-    const appleId = 'apple_' + generateId();
-    const newUser: User = {
-      id: appleId,
-      email: `${appleId}@privaterelay.appleid.com`,
-      username: username.trim(),
-      authMethod: 'apple',
-      reportsCount: 0,
-      joinDate: new Date().toISOString().split('T')[0],
-      level: 'Débutant',
-    };
-    await AsyncStorage.setItem(AUTH_KEY, JSON.stringify(newUser));
-    const usersRaw = await AsyncStorage.getItem(USERS_KEY);
-    const users: User[] = usersRaw ? JSON.parse(usersRaw) : [];
-    users.push(newUser);
-    await AsyncStorage.setItem(USERS_KEY, JSON.stringify(users));
-    setUser(newUser);
-    void queryClient.invalidateQueries({ queryKey: ['auth'] });
-    console.log('[AuthProvider] Signed in with Apple');
-    return newUser;
-  }, [queryClient]);
+    if (data.user) {
+      console.log('[AuthProvider] Sign in successful');
+      const profile = await fetchProfile(data.user.id, data.user.email ?? email);
+      if (profile) {
+        setUser(profile);
+      }
+      void queryClient.invalidateQueries({ queryKey: ['auth'] });
+      return profile;
+    }
 
-  const signInWithGoogle = useCallback(async (username: string) => {
-    const googleId = 'google_' + generateId();
-    const newUser: User = {
-      id: googleId,
-      email: `${googleId}@gmail.com`,
-      username: username.trim(),
-      authMethod: 'google',
-      reportsCount: 0,
-      joinDate: new Date().toISOString().split('T')[0],
-      level: 'Débutant',
-    };
-    await AsyncStorage.setItem(AUTH_KEY, JSON.stringify(newUser));
-    const usersRaw = await AsyncStorage.getItem(USERS_KEY);
-    const users: User[] = usersRaw ? JSON.parse(usersRaw) : [];
-    users.push(newUser);
-    await AsyncStorage.setItem(USERS_KEY, JSON.stringify(users));
-    setUser(newUser);
-    void queryClient.invalidateQueries({ queryKey: ['auth'] });
-    console.log('[AuthProvider] Signed in with Google');
-    return newUser;
-  }, [queryClient]);
+    return null;
+  }, [fetchProfile, queryClient]);
+
+  const signInWithApple = useCallback(async (_username: string) => {
+    console.log('[AuthProvider] Apple sign-in requested (placeholder)');
+    throw new Error('La connexion Apple nécessite une configuration supplémentaire. Utilisez l\'e-mail pour l\'instant.');
+  }, []);
+
+  const signInWithGoogle = useCallback(async (_username: string) => {
+    console.log('[AuthProvider] Google sign-in requested (placeholder)');
+    throw new Error('La connexion Google nécessite une configuration supplémentaire. Utilisez l\'e-mail pour l\'instant.');
+  }, []);
 
   const signOut = useCallback(async () => {
-    await AsyncStorage.removeItem(AUTH_KEY);
+    console.log('[AuthProvider] Signing out');
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.log('[AuthProvider] Sign out error:', error.message);
+    }
     setUser(null);
+    setSession(null);
     void queryClient.invalidateQueries({ queryKey: ['auth'] });
+    void queryClient.invalidateQueries({ queryKey: ['favourites'] });
     console.log('[AuthProvider] Signed out');
   }, [queryClient]);
 
   const resetPassword = useCallback(async (email: string) => {
-    const usersRaw = await AsyncStorage.getItem(USERS_KEY);
-    const users: User[] = usersRaw ? JSON.parse(usersRaw) : [];
-    const found = users.find((u) => u.email.toLowerCase() === email.toLowerCase().trim());
-    if (!found) {
-      throw new Error('Aucun compte trouvé avec cette adresse e-mail.');
+    console.log('[AuthProvider] Requesting password reset for:', email);
+
+    const { error } = await supabase.auth.resetPasswordForEmail(
+      email.toLowerCase().trim(),
+      { redirectTo: undefined }
+    );
+
+    if (error) {
+      console.log('[AuthProvider] Reset password error:', error.message);
+      throw new Error('Une erreur est survenue lors de l\'envoi du lien de réinitialisation.');
     }
-    console.log('[AuthProvider] Password reset requested for:', email);
+
+    console.log('[AuthProvider] Password reset email sent');
     return true;
   }, []);
 
   const updatePassword = useCallback(async (newPassword: string) => {
-    if (!user) return;
-    const updated = { ...user, password: newPassword };
-    setUser(updated);
-    saveMutation.mutate(updated);
+    console.log('[AuthProvider] Updating password');
+
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+
+    if (error) {
+      console.log('[AuthProvider] Update password error:', error.message);
+      throw new Error('Erreur lors de la mise à jour du mot de passe.');
+    }
+
     console.log('[AuthProvider] Password updated');
-  }, [user, saveMutation]);
+  }, []);
 
-  const incrementReports = useCallback(() => {
-    setUser((prev) => {
-      if (!prev) return prev;
-      const newCount = prev.reportsCount + 1;
-      const updated = { ...prev, reportsCount: newCount, level: getLevel(newCount) };
-      saveMutation.mutate(updated);
-      return updated;
-    });
-  }, [saveMutation]);
+  const incrementReports = useCallback(async () => {
+    if (!user) return;
 
-  const updateUsername = useCallback((username: string) => {
-    setUser((prev) => {
-      if (!prev) return prev;
-      const updated = { ...prev, username };
-      saveMutation.mutate(updated);
-      return updated;
-    });
-  }, [saveMutation]);
+    try {
+      const { error } = await supabase.rpc('increment_reports_count', {
+        user_uuid: user.id,
+      });
+
+      if (error) {
+        console.log('[AuthProvider] Increment reports error:', error.message);
+        return;
+      }
+
+      const profile = await fetchProfile(user.id, user.email);
+      if (profile) {
+        setUser(profile);
+      }
+      console.log('[AuthProvider] Reports count incremented');
+    } catch (e) {
+      console.log('[AuthProvider] Exception incrementing reports:', e);
+    }
+  }, [user, fetchProfile]);
+
+  const updateUsername = useCallback(async (username: string) => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ username: username.trim() })
+        .eq('id', user.id);
+
+      if (error) {
+        console.log('[AuthProvider] Update username error:', error.message);
+        throw new Error('Erreur lors de la mise à jour du nom d\'utilisateur.');
+      }
+
+      setUser((prev) => prev ? { ...prev, username: username.trim() } : prev);
+      console.log('[AuthProvider] Username updated to:', username.trim());
+    } catch (e) {
+      console.log('[AuthProvider] Exception updating username:', e);
+      throw e;
+    }
+  }, [user]);
+
+  const refreshProfile = useCallback(async () => {
+    if (!session?.user) return;
+    const profile = await fetchProfile(session.user.id, session.user.email ?? '');
+    if (profile) {
+      setUser(profile);
+    }
+  }, [session, fetchProfile]);
 
   return useMemo(() => ({
     user,
-    isAuthenticated: !!user,
+    session,
+    isAuthenticated: !!user && !!session,
     isLoading,
     signUpWithEmail,
     signInWithEmail,
@@ -214,5 +283,6 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     updatePassword,
     incrementReports,
     updateUsername,
-  }), [user, isLoading, signUpWithEmail, signInWithEmail, signInWithApple, signInWithGoogle, signOut, resetPassword, updatePassword, incrementReports, updateUsername]);
+    refreshProfile,
+  }), [user, session, isLoading, signUpWithEmail, signInWithEmail, signInWithApple, signInWithGoogle, signOut, resetPassword, updatePassword, incrementReports, updateUsername, refreshProfile]);
 });

@@ -96,12 +96,14 @@ export default function MapScreen() {
       }
     }
   }, [userLocation]);
+
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
 
   const selectedPlace = useMemo(() => {
     if (!selectedPlaceId) return null;
     return places.find((p) => p.id === selectedPlaceId) ?? null;
   }, [selectedPlaceId, places]);
+
   const mapRef = useRef<any>(null);
   const slideAnim = useRef(new Animated.Value(200)).current;
 
@@ -157,7 +159,7 @@ export default function MapScreen() {
   const acceptedCount = useMemo(() => allPlaces.filter((p) => p.accepted).length, [allPlaces]);
   const refusedCount = useMemo(() => allPlaces.filter((p) => !p.accepted).length, [allPlaces]);
 
-  const renderCategoryFilters = () => (
+  const renderCategoryFilters = useCallback(() => (
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
@@ -172,6 +174,7 @@ export default function MapScreen() {
             style={[styles.categoryChip, isSelected && styles.categoryChipActive]}
             onPress={() => handleCategoryPress(cat)}
             activeOpacity={0.7}
+            testID={`category-${cat}`}
           >
             <Icon size={14} color={isSelected ? '#FFFFFF' : colors.textSecondary} strokeWidth={isSelected ? 2.2 : 1.5} />
             <Text style={[styles.categoryLabel, isSelected && styles.categoryLabelActive]}>
@@ -181,14 +184,15 @@ export default function MapScreen() {
         );
       })}
     </ScrollView>
-  );
+  ), [styles, selectedCategory, handleCategoryPress, colors]);
 
-  const renderStatusFilters = () => (
+  const renderStatusFilters = useCallback(() => (
     <View style={styles.filterRow}>
       <TouchableOpacity
         style={styles.filterChipWrap}
         onPress={() => { setFilter('all'); Keyboard.dismiss(); }}
         activeOpacity={0.7}
+        testID="filter-all"
       >
         <View style={[styles.filterChip, filter === 'all' && styles.filterChipActive]}>
           <ListFilter size={13} color={filter === 'all' ? '#FFFFFF' : colors.textSecondary} strokeWidth={2} />
@@ -201,6 +205,7 @@ export default function MapScreen() {
         style={styles.filterChipWrap}
         onPress={() => { setFilter('accepted'); Keyboard.dismiss(); }}
         activeOpacity={0.7}
+        testID="filter-accepted"
       >
         <View style={[styles.filterChip, filter === 'accepted' && styles.filterChipAccepted]}>
           <CheckCircle size={13} color={filter === 'accepted' ? '#FFFFFF' : colors.accepted} strokeWidth={2} />
@@ -213,6 +218,7 @@ export default function MapScreen() {
         style={styles.filterChipWrap}
         onPress={() => { setFilter('refused'); Keyboard.dismiss(); }}
         activeOpacity={0.7}
+        testID="filter-refused"
       >
         <View style={[styles.filterChip, filter === 'refused' && styles.filterChipRefused]}>
           <XCircle size={13} color={filter === 'refused' ? '#FFFFFF' : colors.refused} strokeWidth={2} />
@@ -222,7 +228,7 @@ export default function MapScreen() {
         </View>
       </TouchableOpacity>
     </View>
-  );
+  ), [styles, filter, allPlaces.length, acceptedCount, refusedCount, colors]);
 
   if (Platform.OS === 'web') {
     return (
@@ -234,13 +240,15 @@ export default function MapScreen() {
         <ScrollView style={styles.webList} contentContainerStyle={styles.webListContent}>
           <View style={styles.webMapNotice}>
             <MapPin size={18} color={colors.textSecondary} strokeWidth={1.5} />
-            <Text style={styles.webMapNoticeText}>La carte est disponible sur l'application mobile</Text>
+            <Text style={styles.webMapNoticeText}>La carte interactive est disponible sur l'application mobile</Text>
           </View>
           {filteredPlaces.map((place) => (
             <PlaceCard key={place.id} place={place} onPress={handlePlacePress} compact={false} />
           ))}
           {filteredPlaces.length === 0 && (
-            <Text style={styles.emptyText}>Aucun lieu trouvé</Text>
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>Aucun lieu trouvé</Text>
+            </View>
           )}
         </ScrollView>
         <FloatingActionButton onPress={handleAddReport} />
@@ -258,6 +266,7 @@ export default function MapScreen() {
           onPress={handleMapPress}
           showsUserLocation
           showsMyLocationButton={false}
+          testID="native-map"
         >
           {NativeMarker && filteredPlaces.map((place) => (
             <NativeMarker
@@ -275,7 +284,12 @@ export default function MapScreen() {
         {renderStatusFilters()}
       </View>
 
-      <TouchableOpacity style={[styles.centerButtonWrap, { bottom: selectedPlace ? 280 : 94 }]} onPress={handleCenterMap} activeOpacity={0.8}>
+      <TouchableOpacity
+        style={[styles.centerButtonWrap, { bottom: selectedPlace ? 280 : 94 }]}
+        onPress={handleCenterMap}
+        activeOpacity={0.8}
+        testID="center-map-button"
+      >
         <View style={styles.centerButton}>
           <Locate size={20} color={colors.primary} strokeWidth={1.5} />
         </View>
@@ -399,7 +413,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     overflow: 'hidden',
     shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.12,
     shadowRadius: 6,
     elevation: 3,
   },
@@ -450,10 +464,13 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     color: colors.textSecondary,
     fontWeight: '400' as const,
   },
+  emptyContainer: {
+    paddingTop: 40,
+    alignItems: 'center',
+  },
   emptyText: {
     textAlign: 'center' as const,
     color: colors.textSecondary,
     fontSize: 15,
-    marginTop: 40,
   },
 });

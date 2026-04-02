@@ -2,7 +2,7 @@ import React, { useMemo, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { CreditCard, ArrowRight } from 'lucide-react-native';
+import { CreditCard, ArrowRight, MapPin, Users, Star } from 'lucide-react-native';
 import { useThemeColors, ThemeColors } from '@/constants/colors';
 
 export default function WelcomeScreen() {
@@ -12,18 +12,22 @@ export default function WelcomeScreen() {
   const styles = useMemo(() => createStyles(colors), [colors]);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
+  const featureFade = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, { toValue: 1, duration: 600, useNativeDriver: true }),
-      Animated.timing(slideAnim, { toValue: 0, duration: 600, useNativeDriver: true }),
+    Animated.sequence([
+      Animated.parallel([
+        Animated.timing(fadeAnim, { toValue: 1, duration: 600, useNativeDriver: true }),
+        Animated.timing(slideAnim, { toValue: 0, duration: 600, useNativeDriver: true }),
+      ]),
+      Animated.timing(featureFade, { toValue: 1, duration: 400, useNativeDriver: true }),
     ]).start();
-  }, [fadeAnim, slideAnim]);
+  }, [fadeAnim, slideAnim, featureFade]);
 
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
-      <View style={styles.container}>
+      <View style={styles.container} testID="welcome-screen">
         <View style={[styles.topSection, { paddingTop: insets.top + 60 }]}>
           <Animated.View style={[styles.logoContainer, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
             <View style={styles.logoCircle}>
@@ -38,18 +42,33 @@ export default function WelcomeScreen() {
             </Text>
           </Animated.View>
 
-          <Animated.View style={[styles.features, { opacity: fadeAnim }]}>
+          <Animated.View style={[styles.features, { opacity: featureFade }]}>
             <View style={styles.featureRow}>
-              <View style={styles.featureDot} />
-              <Text style={styles.featureText}>Carte interactive des commerces</Text>
+              <View style={styles.featureIconWrap}>
+                <MapPin size={16} color="#006FCF" strokeWidth={2} />
+              </View>
+              <View style={styles.featureTextWrap}>
+                <Text style={styles.featureTitle}>Carte interactive</Text>
+                <Text style={styles.featureDesc}>Trouvez les commerces Amex autour de vous</Text>
+              </View>
             </View>
             <View style={styles.featureRow}>
-              <View style={styles.featureDot} />
-              <Text style={styles.featureText}>Signalements de la communauté</Text>
+              <View style={styles.featureIconWrap}>
+                <Users size={16} color="#006FCF" strokeWidth={2} />
+              </View>
+              <View style={styles.featureTextWrap}>
+                <Text style={styles.featureTitle}>Communauté active</Text>
+                <Text style={styles.featureDesc}>Signalements vérifiés par les utilisateurs</Text>
+              </View>
             </View>
             <View style={styles.featureRow}>
-              <View style={styles.featureDot} />
-              <Text style={styles.featureText}>Sauvegardez vos lieux favoris</Text>
+              <View style={styles.featureIconWrap}>
+                <Star size={16} color="#006FCF" strokeWidth={2} />
+              </View>
+              <View style={styles.featureTextWrap}>
+                <Text style={styles.featureTitle}>Favoris personnels</Text>
+                <Text style={styles.featureDesc}>Sauvegardez vos lieux préférés</Text>
+              </View>
             </View>
           </Animated.View>
         </View>
@@ -57,7 +76,10 @@ export default function WelcomeScreen() {
         <View style={[styles.bottomSection, { paddingBottom: insets.bottom + 20 }]}>
           <TouchableOpacity
             style={styles.signupButton}
-            onPress={() => router.push('/signup' as never)}
+            onPress={() => {
+              console.log('[Welcome] Navigating to signup');
+              router.push('/signup' as never);
+            }}
             activeOpacity={0.8}
             testID="welcome-signup"
           >
@@ -67,7 +89,10 @@ export default function WelcomeScreen() {
 
           <TouchableOpacity
             style={styles.loginButton}
-            onPress={() => router.push('/login' as never)}
+            onPress={() => {
+              console.log('[Welcome] Navigating to login');
+              router.push('/login' as never);
+            }}
             activeOpacity={0.7}
             testID="welcome-login"
           >
@@ -101,6 +126,8 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 24,
+    borderWidth: 1,
+    borderColor: '#D6E6FF',
   },
   titleRow: {
     flexDirection: 'row',
@@ -121,28 +148,41 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     fontSize: 16,
     fontWeight: '400' as const,
     color: colors.textSecondary,
-    textAlign: 'center',
+    textAlign: 'center' as const,
     lineHeight: 24,
   },
   features: {
-    gap: 16,
-    paddingHorizontal: 8,
+    gap: 20,
+    paddingHorizontal: 4,
   },
   featureRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 14,
   },
-  featureDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#006FCF',
+  featureIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: '#EBF3FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#D6E6FF',
   },
-  featureText: {
+  featureTextWrap: {
+    flex: 1,
+  },
+  featureTitle: {
     fontSize: 15,
-    fontWeight: '500' as const,
+    fontWeight: '600' as const,
     color: colors.textPrimary,
+    marginBottom: 2,
+  },
+  featureDesc: {
+    fontSize: 13,
+    fontWeight: '400' as const,
+    color: colors.textSecondary,
   },
   bottomSection: {
     paddingHorizontal: 28,

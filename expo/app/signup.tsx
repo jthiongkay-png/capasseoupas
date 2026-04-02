@@ -23,6 +23,14 @@ export default function SignupScreen() {
   const [authMethod, setAuthMethod] = useState<'email' | 'apple' | 'google' | null>(null);
   const [usernameStep, setUsernameStep] = useState(false);
 
+  const handleGoBack = useCallback(() => {
+    router.back();
+  }, [router]);
+
+  const togglePasswordVisibility = useCallback(() => {
+    setShowPassword((prev) => !prev);
+  }, []);
+
   const handleEmailSignup = useCallback(async () => {
     if (!email.trim() || !password || !username.trim()) {
       Alert.alert('Champs requis', 'Veuillez remplir tous les champs.');
@@ -44,10 +52,13 @@ export default function SignupScreen() {
 
     setLoading(true);
     try {
+      console.log('[Signup] Attempting email signup for:', email.trim());
       await signUpWithEmail(email.trim(), password, username.trim());
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      console.log('[Signup] Email signup successful');
       router.replace('/(tabs)/(map)' as never);
     } catch (e: any) {
+      console.log('[Signup] Email signup failed:', e.message);
       Alert.alert('Erreur', e.message || 'Une erreur est survenue.');
     } finally {
       setLoading(false);
@@ -61,14 +72,17 @@ export default function SignupScreen() {
     }
     setLoading(true);
     try {
+      console.log('[Signup] Attempting', method, 'signup');
       if (method === 'apple') {
         await signInWithApple(username.trim());
       } else {
         await signInWithGoogle(username.trim());
       }
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      console.log('[Signup] Social signup successful');
       router.replace('/(tabs)/(map)' as never);
     } catch (e: any) {
+      console.log('[Signup] Social signup failed:', e.message);
       Alert.alert('Erreur', e.message || 'Une erreur est survenue.');
     } finally {
       setLoading(false);
@@ -80,17 +94,30 @@ export default function SignupScreen() {
     setUsernameStep(true);
   }, []);
 
+  const handleBackFromUsername = useCallback(() => {
+    setUsernameStep(false);
+  }, []);
+
   if (usernameStep && authMethod) {
     return (
       <>
         <Stack.Screen options={{ headerShown: false }} />
-        <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <KeyboardAvoidingView
+          style={styles.container}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          testID="signup-username-step"
+        >
           <View style={[styles.topBar, { paddingTop: insets.top + 8 }]}>
-            <TouchableOpacity onPress={() => setUsernameStep(false)} style={styles.backButton}>
+            <TouchableOpacity onPress={handleBackFromUsername} style={styles.backButton} testID="signup-back-username">
               <ArrowLeft size={20} color={colors.textPrimary} strokeWidth={1.5} />
             </TouchableOpacity>
           </View>
-          <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+          <ScrollView
+            style={styles.scroll}
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
             <Text style={styles.title}>Choisissez un pseudo</Text>
             <Text style={styles.subtitle}>
               {authMethod === 'apple' ? 'Connexion avec Apple' : 'Connexion avec Google'}
@@ -114,9 +141,10 @@ export default function SignupScreen() {
 
             <TouchableOpacity
               style={[styles.primaryButton, loading && styles.buttonDisabled]}
-              onPress={() => handleSocialSignup(authMethod as 'apple' | 'google')}
+              onPress={() => handleSocialSignup(authMethod as "apple" | "google")}
               activeOpacity={0.8}
               disabled={loading}
+              testID="signup-social-submit"
             >
               {loading ? (
                 <ActivityIndicator color="#FFFFFF" size="small" />
@@ -133,25 +161,44 @@ export default function SignupScreen() {
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
-      <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        testID="signup-screen"
+      >
         <View style={[styles.topBar, { paddingTop: insets.top + 8 }]}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <TouchableOpacity onPress={handleGoBack} style={styles.backButton} testID="signup-back">
             <ArrowLeft size={20} color={colors.textPrimary} strokeWidth={1.5} />
           </TouchableOpacity>
         </View>
 
-        <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
           <Text style={styles.title}>Créer un compte</Text>
           <Text style={styles.subtitle}>Rejoignez la communauté Capasseoupas</Text>
 
           <View style={styles.socialButtons}>
             {Platform.OS !== 'web' && (
-              <TouchableOpacity style={styles.socialButton} onPress={() => handleSocialPress('apple')} activeOpacity={0.7}>
+              <TouchableOpacity
+                style={styles.socialButton}
+                onPress={() => handleSocialPress('apple')}
+                activeOpacity={0.7}
+                testID="signup-apple"
+              >
                 <Text style={styles.socialIcon}>🍎</Text>
                 <Text style={styles.socialButtonText}>Continuer avec Apple</Text>
               </TouchableOpacity>
             )}
-            <TouchableOpacity style={styles.socialButton} onPress={() => handleSocialPress('google')} activeOpacity={0.7}>
+            <TouchableOpacity
+              style={styles.socialButton}
+              onPress={() => handleSocialPress('google')}
+              activeOpacity={0.7}
+              testID="signup-google"
+            >
               <Text style={styles.socialIcon}>G</Text>
               <Text style={styles.socialButtonText}>Continuer avec Google</Text>
             </TouchableOpacity>
@@ -209,7 +256,11 @@ export default function SignupScreen() {
               secureTextEntry={!showPassword}
               testID="signup-password"
             />
-            <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeButton}>
+            <TouchableOpacity
+              onPress={togglePasswordVisibility}
+              style={styles.eyeButton}
+              testID="signup-toggle-password"
+            >
               {showPassword ? (
                 <EyeOff size={18} color={colors.textTertiary} strokeWidth={1.5} />
               ) : (
@@ -279,6 +330,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 28,
     paddingTop: 12,
+    paddingBottom: 40,
   },
   title: {
     fontSize: 28,

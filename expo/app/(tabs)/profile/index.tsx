@@ -2,7 +2,7 @@ import React, { useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Linking, Platform, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Info, FileText, Shield, Mail, ChevronRight, CreditCard, Users, Star, Heart, Flag, AlertOctagon, User, LogOut, Bookmark, Edit3 } from 'lucide-react-native';
+import { Info, FileText, Shield, Mail, ChevronRight, CreditCard, Users, Star, Flag, AlertOctagon, User, LogOut, Bookmark, Edit3 } from 'lucide-react-native';
 import { useThemeColors, ThemeColors } from '@/constants/colors';
 import { usePlaces } from '@/providers/PlacesProvider';
 import { useAuth } from '@/providers/AuthProvider';
@@ -27,6 +27,7 @@ function SettingsRow({ icon, label, sublabel, onPress, rightElement, colors }: S
       onPress={onPress}
       activeOpacity={onPress ? 0.6 : 1}
       disabled={!onPress}
+      testID={`settings-row-${label.replace(/\s+/g, '-').toLowerCase()}`}
     >
       <View style={styles.settingsRowLeft}>
         <View style={styles.settingsRowIcon}>{icon}</View>
@@ -49,10 +50,11 @@ export default function SettingsScreen() {
   const colors = useThemeColors();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
-  const acceptedCount = places.filter((p) => p.accepted).length;
-  const refusedCount = places.filter((p) => !p.accepted).length;
+  const acceptedCount = useMemo(() => places.filter((p) => p.accepted).length, [places]);
+  const refusedCount = useMemo(() => places.filter((p) => !p.accepted).length, [places]);
 
   const handleContact = useCallback(() => {
+    console.log('[Settings] Opening contact email');
     void Linking.openURL('mailto:contact@capasseoupas.app');
   }, []);
 
@@ -63,7 +65,10 @@ export default function SettingsScreen() {
       [
         {
           text: 'Par e-mail',
-          onPress: () => void Linking.openURL('mailto:contact@capasseoupas.app?subject=Signalement%20d%27abus%20-%20Capasseoupas'),
+          onPress: () => {
+            console.log('[Settings] Opening abuse report email');
+            void Linking.openURL('mailto:contact@capasseoupas.app?subject=Signalement%20d%27abus%20-%20Capasseoupas');
+          },
         },
         {
           text: 'Annuler',
@@ -78,6 +83,7 @@ export default function SettingsScreen() {
     const storeUrl = Platform.OS === 'ios'
       ? 'https://apps.apple.com/app/capasseoupas'
       : 'https://play.google.com/store/apps/details?id=com.capasseoupas';
+    console.log('[Settings] Opening store for rating');
     void Linking.openURL(storeUrl);
   }, []);
 
@@ -91,8 +97,8 @@ export default function SettingsScreen() {
           text: 'Déconnexion',
           style: 'destructive',
           onPress: () => {
-            void signOut();
             console.log('[Settings] User signed out');
+            void signOut();
           },
         },
       ]
@@ -114,6 +120,7 @@ export default function SettingsScreen() {
       style={[styles.container, { paddingTop: insets.top }]}
       showsVerticalScrollIndicator={false}
       contentContainerStyle={styles.contentContainer}
+      testID="settings-screen"
     >
       <View style={styles.header}>
         <View style={styles.appTitleRow}>
@@ -309,7 +316,12 @@ export default function SettingsScreen() {
 
       <View style={styles.section}>
         <View style={styles.card}>
-          <TouchableOpacity style={styles.logoutRow} onPress={handleSignOut} activeOpacity={0.6}>
+          <TouchableOpacity
+            style={styles.logoutRow}
+            onPress={handleSignOut}
+            activeOpacity={0.6}
+            testID="sign-out-button"
+          >
             <View style={[styles.settingsRowIcon, styles.logoutIcon]}>
               <LogOut size={18} color="#FF453A" strokeWidth={1.5} />
             </View>
@@ -324,7 +336,7 @@ export default function SettingsScreen() {
           <Text style={styles.footerLogoBold}>apasseoupas</Text>
         </View>
         <Text style={styles.footerText}>
-          Fait avec <Heart size={10} color={colors.refused} /> pour la communauté Amex en France
+          Fait avec ❤️ pour la communauté Amex en France
         </Text>
         <Text style={styles.footerDisclaimer}>
           Capasseoupas n'est pas affilié à American Express.{'\n'}Toutes les données proviennent de la communauté.
@@ -602,13 +614,11 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   footerText: {
     fontSize: 12,
     color: colors.textSecondary,
-    flexDirection: 'row',
-    alignItems: 'center',
   },
   footerDisclaimer: {
     fontSize: 11,
     color: colors.textTertiary,
-    textAlign: 'center',
+    textAlign: 'center' as const,
     lineHeight: 16,
     marginTop: 4,
   },

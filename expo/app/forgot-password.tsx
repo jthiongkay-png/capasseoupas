@@ -17,6 +17,10 @@ export default function ForgotPasswordScreen() {
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
 
+  const handleGoBack = useCallback(() => {
+    router.back();
+  }, [router]);
+
   const handleReset = useCallback(async () => {
     if (!email.trim()) {
       Alert.alert('E-mail requis', 'Veuillez entrer votre adresse e-mail.');
@@ -30,22 +34,30 @@ export default function ForgotPasswordScreen() {
 
     setLoading(true);
     try {
+      console.log('[ForgotPassword] Requesting reset for:', email.trim());
       await resetPassword(email.trim());
       setSent(true);
+      console.log('[ForgotPassword] Reset email sent successfully');
     } catch (e: any) {
+      console.log('[ForgotPassword] Reset failed:', e.message);
       Alert.alert('Erreur', e.message || 'Une erreur est survenue.');
     } finally {
       setLoading(false);
     }
   }, [email, resetPassword]);
 
+  const handleBackToLogin = useCallback(() => {
+    console.log('[ForgotPassword] Navigating back to login');
+    router.replace('/login' as never);
+  }, [router]);
+
   if (sent) {
     return (
       <>
         <Stack.Screen options={{ headerShown: false }} />
-        <View style={[styles.container, { paddingTop: insets.top }]}>
+        <View style={[styles.container, { paddingTop: insets.top }]} testID="forgot-success">
           <View style={styles.successContainer}>
-            <View style={styles.successIcon}>
+            <View style={styles.successIconWrap}>
               <CheckCircle size={48} color="#006FCF" strokeWidth={1.5} />
             </View>
             <Text style={styles.successTitle}>E-mail envoyé !</Text>
@@ -58,8 +70,9 @@ export default function ForgotPasswordScreen() {
             </Text>
             <TouchableOpacity
               style={styles.primaryButton}
-              onPress={() => router.replace('/login' as never)}
+              onPress={handleBackToLogin}
               activeOpacity={0.8}
+              testID="forgot-back-to-login"
             >
               <Text style={styles.primaryButtonText}>Retour à la connexion</Text>
             </TouchableOpacity>
@@ -72,14 +85,23 @@ export default function ForgotPasswordScreen() {
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
-      <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        testID="forgot-password-screen"
+      >
         <View style={[styles.topBar, { paddingTop: insets.top + 8 }]}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <TouchableOpacity onPress={handleGoBack} style={styles.backButton} testID="forgot-back">
             <ArrowLeft size={20} color={colors.textPrimary} strokeWidth={1.5} />
           </TouchableOpacity>
         </View>
 
-        <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
           <Text style={styles.title}>Mot de passe oublié</Text>
           <Text style={styles.subtitle}>
             Entrez votre adresse e-mail et nous vous enverrons un lien pour réinitialiser votre mot de passe.
@@ -118,8 +140,9 @@ export default function ForgotPasswordScreen() {
 
           <TouchableOpacity
             style={styles.backToLogin}
-            onPress={() => router.back()}
+            onPress={handleGoBack}
             activeOpacity={0.7}
+            testID="forgot-go-back"
           >
             <Text style={styles.backToLoginText}>Retour à la connexion</Text>
           </TouchableOpacity>
@@ -154,6 +177,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 28,
     paddingTop: 12,
+    paddingBottom: 40,
   },
   title: {
     fontSize: 28,
@@ -219,8 +243,16 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 40,
   },
-  successIcon: {
+  successIconWrap: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#EBF3FF',
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 24,
+    borderWidth: 1,
+    borderColor: '#D6E6FF',
   },
   successTitle: {
     fontSize: 24,
@@ -232,7 +264,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     fontSize: 15,
     fontWeight: '400' as const,
     color: colors.textSecondary,
-    textAlign: 'center',
+    textAlign: 'center' as const,
     lineHeight: 22,
     marginBottom: 8,
   },
@@ -244,7 +276,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     fontSize: 13,
     fontWeight: '400' as const,
     color: colors.textTertiary,
-    textAlign: 'center',
+    textAlign: 'center' as const,
     lineHeight: 20,
     marginBottom: 32,
   },

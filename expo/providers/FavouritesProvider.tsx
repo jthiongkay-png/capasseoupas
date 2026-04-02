@@ -1,35 +1,43 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import createContextHook from '@nkzw/create-context-hook';
-
-const FAVOURITES_KEY = 'capasseoupas_favourites';
+import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/providers/AuthProvider';
+import { DbFavourite } from '@/types';
 
 export const [FavouritesProvider, useFavourites] = createContextHook(() => {
   const [favouriteIds, setFavouriteIds] = useState<string[]>([]);
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
 
   const favQuery = useQuery({
-    queryKey: ['favourites'],
+    queryKey: ['favourites', user?.id],
     queryFn: async () => {
-      try {
-        const stored = await AsyncStorage.getItem(FAVOURITES_KEY);
-        if (stored) {
-          const parsed = JSON.parse(stored) as string[];
-          console.log('[FavouritesProvider] Loaded', parsed.length, 'favourites');
-          return parsed;
-        }
-      } catch (e) {
-        console.log('[FavouritesProvider] Error loading favourites:', e);
+      if (!user) {
+        console.log('[FavouritesProvider] No user, returning empty favourites');
+        return [] as string[];
       }
-      return [] as string[];
-    },
-  });
 
-  const saveMutation = useMutation({
-    mutationFn: async (ids: string[]) => {
-      await AsyncStorage.setItem(FAVOURITES_KEY, JSON.stringify(ids));
-      return ids;
+      try {
+        const { data, error } = await supabase
+          .from('favourites')
+          .select('place_id')
+          .eq('user_id', user.id);
+
+        if (error) {
+          console.log('[FavouritesProvider] Supabase error:', error.message);
+          return [] as string[];
+        }
+
+        const ids = (data as Pick<DbFavourite, 'place_id'>[]).map((f) => f.place_id);
+        console.log('[FavouritesProvider] Loaded', ids.length, 'favourites from Supabase');
+        return ids;
+      } catch (e) {
+        console.log('[FavouritesProvider] Exception loading favourites:', e);
+        return [] as string[];
+      }
     },
+    enabled: !!user,
   });
 
   useEffect(() => {
@@ -38,15 +46,71 @@ export const [FavouritesProvider, useFavourites] = createContextHook(() => {
     }
   }, [favQuery.data]);
 
+  useEffect(() => {
+    if (!user) {
+      setFavouriteIds([]);
+    }
+  }, [user]);
+
+  const addFavMutation = useMutation({
+    mutationFn: async (placeId: string) => {
+      if (!user) throw new Error('Not authenticated');
+
+      const { error } = await supabase
+        .from('favourites')
+        .insert({ user_id: user.id, place_id: placeId });
+
+      if (error) {
+        console.log('[FavouritesProvider] Error adding favourite:', error.message);
+        throw error;
+      }
+
+      console.log('[FavouritesProvider] Added favourite:', placeId);
+      return placeId;
+    },
+  });
+
+  const removeFavMutation = useMutation({
+    mutationFn: async (placeId: string) => {
+      if (!user) throw new Error('Not authenticated');
+
+      const { error } = await supabase
+        .from('favourites')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('place_id', placeId);
+
+      if (error) {
+        console.log('[FavouritesProvider] Error removing favourite:', error.message);
+        throw error;
+      }
+
+      console.log('[FavouritesProvider] Removed favourite:', placeId);
+      return placeId;
+    },
+  });
+
   const toggleFavourite = useCallback((placeId: string) => {
-    setFavouriteIds((prev) => {
-      const exists = prev.includes(placeId);
-      const updated = exists ? prev.filter((id) => id !== placeId) : [...prev, placeId];
-      saveMutation.mutate(updated);
-      console.log('[FavouritesProvider]', exists ? 'Removed' : 'Added', 'favourite:', placeId);
-      return updated;
-    });
-  }, [saveMutation]);
+    const exists = favouriteIds.includes(placeId);
+
+    if (exists) {
+      setFavouriteIds((prev) => prev.filter((id) => id !== placeId));
+      removeFavMutation.mutate(placeId, {
+        onError: () => {
+          setFavouriteIds((prev) => [...prev, placeId]);
+          void queryClient.invalidateQueries({ queryKey: ['favourites'] });
+        },
+      });
+    } else {
+      setFavouriteIds((prev) => [...prev, placeId]);
+      addFavMutation.mutate(placeId, {
+        onError: () => {
+          setFavouriteIds((prev) => prev.filter((id) => id !== placeId));
+          void queryClient.invalidateQueries({ queryKey: ['favourites'] });
+        },
+      });
+    }
+  }, [favouriteIds, addFavMutation, removeFavMutation, queryClient]);
 
   const isFavourite = useCallback((placeId: string) => {
     return favouriteIds.includes(placeId);

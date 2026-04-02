@@ -19,6 +19,10 @@ export default function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  const handleGoBack = useCallback(() => {
+    router.back();
+  }, [router]);
+
   const handleLogin = useCallback(async () => {
     if (!email.trim() || !password) {
       Alert.alert('Champs requis', 'Veuillez remplir tous les champs.');
@@ -27,27 +31,53 @@ export default function LoginScreen() {
 
     setLoading(true);
     try {
+      console.log('[Login] Attempting sign in for:', email.trim());
       await signInWithEmail(email.trim(), password);
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      console.log('[Login] Sign in successful');
       router.replace('/(tabs)/(map)' as never);
     } catch (e: any) {
+      console.log('[Login] Sign in failed:', e.message);
       Alert.alert('Erreur de connexion', e.message || 'Une erreur est survenue.');
     } finally {
       setLoading(false);
     }
   }, [email, password, signInWithEmail, router]);
 
+  const handleForgotPassword = useCallback(() => {
+    console.log('[Login] Navigating to forgot password');
+    router.push('/forgot-password' as never);
+  }, [router]);
+
+  const handleGoToSignup = useCallback(() => {
+    console.log('[Login] Navigating to signup');
+    router.replace('/signup' as never);
+  }, [router]);
+
+  const togglePasswordVisibility = useCallback(() => {
+    setShowPassword((prev) => !prev);
+  }, []);
+
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
-      <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        testID="login-screen"
+      >
         <View style={[styles.topBar, { paddingTop: insets.top + 8 }]}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <TouchableOpacity onPress={handleGoBack} style={styles.backButton} testID="login-back">
             <ArrowLeft size={20} color={colors.textPrimary} strokeWidth={1.5} />
           </TouchableOpacity>
         </View>
 
-        <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
           <Text style={styles.title}>Connexion</Text>
           <Text style={styles.subtitle}>Accédez à votre compte Capasseoupas</Text>
 
@@ -81,7 +111,11 @@ export default function LoginScreen() {
               secureTextEntry={!showPassword}
               testID="login-password"
             />
-            <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeButton}>
+            <TouchableOpacity
+              onPress={togglePasswordVisibility}
+              style={styles.eyeButton}
+              testID="login-toggle-password"
+            >
               {showPassword ? (
                 <EyeOff size={18} color={colors.textTertiary} strokeWidth={1.5} />
               ) : (
@@ -92,8 +126,9 @@ export default function LoginScreen() {
 
           <TouchableOpacity
             style={styles.forgotButton}
-            onPress={() => router.push('/forgot-password' as never)}
+            onPress={handleForgotPassword}
             activeOpacity={0.7}
+            testID="login-forgot"
           >
             <Text style={styles.forgotText}>Mot de passe oublié ?</Text>
           </TouchableOpacity>
@@ -114,7 +149,7 @@ export default function LoginScreen() {
 
           <View style={styles.signupRow}>
             <Text style={styles.signupHint}>Pas encore de compte ?</Text>
-            <TouchableOpacity onPress={() => router.replace('/signup' as never)}>
+            <TouchableOpacity onPress={handleGoToSignup} testID="login-to-signup">
               <Text style={styles.signupLink}>Créer un compte</Text>
             </TouchableOpacity>
           </View>
@@ -149,6 +184,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 28,
     paddingTop: 12,
+    paddingBottom: 40,
   },
   title: {
     fontSize: 28,
