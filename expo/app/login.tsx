@@ -32,17 +32,16 @@ export default function LoginScreen() {
     setLoading(true);
     try {
       console.log('[Login] Attempting sign in for:', email.trim());
-      await signInWithEmail(email.trim(), password);
+      const profile = await signInWithEmail(email.trim(), password);
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      console.log('[Login] Sign in successful');
-      router.replace('/(tabs)/(map)' as never);
+      console.log('[Login] Sign in successful, profile:', profile?.username ?? 'none');
     } catch (e: any) {
       console.log('[Login] Sign in failed:', e.message);
       Alert.alert('Erreur de connexion', e.message || 'Une erreur est survenue.');
     } finally {
       setLoading(false);
     }
-  }, [email, password, signInWithEmail, router]);
+  }, [email, password, signInWithEmail]);
 
   const handleForgotPassword = useCallback(() => {
     console.log('[Login] Navigating to forgot password');

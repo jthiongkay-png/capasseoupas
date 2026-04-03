@@ -53,17 +53,16 @@ export default function SignupScreen() {
     setLoading(true);
     try {
       console.log('[Signup] Attempting email signup for:', email.trim());
-      await signUpWithEmail(email.trim(), password, username.trim());
+      const profile = await signUpWithEmail(email.trim(), password, username.trim());
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      console.log('[Signup] Email signup successful');
-      router.replace('/(tabs)/(map)' as never);
+      console.log('[Signup] Email signup successful, profile:', profile?.username ?? 'none');
     } catch (e: any) {
       console.log('[Signup] Email signup failed:', e.message);
       Alert.alert('Erreur', e.message || 'Une erreur est survenue.');
     } finally {
       setLoading(false);
     }
-  }, [email, password, confirmPassword, username, signUpWithEmail, router]);
+  }, [email, password, confirmPassword, username, signUpWithEmail]);
 
   const handleSocialSignup = useCallback(async (method: 'apple' | 'google') => {
     if (!username.trim()) {
@@ -80,14 +79,13 @@ export default function SignupScreen() {
       }
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       console.log('[Signup] Social signup successful');
-      router.replace('/(tabs)/(map)' as never);
     } catch (e: any) {
       console.log('[Signup] Social signup failed:', e.message);
       Alert.alert('Erreur', e.message || 'Une erreur est survenue.');
     } finally {
       setLoading(false);
     }
-  }, [username, signInWithApple, signInWithGoogle, router]);
+  }, [username, signInWithApple, signInWithGoogle]);
 
   const handleSocialPress = useCallback((method: 'apple' | 'google') => {
     setAuthMethod(method);

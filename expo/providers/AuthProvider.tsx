@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import createContextHook from '@nkzw/create-context-hook';
 import { supabase } from '@/lib/supabase';
@@ -9,6 +9,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const isAuthActionRef = useRef<boolean>(false);
   const queryClient = useQueryClient();
 
   const fetchProfile = useCallback(async (userId: string, email: string): Promise<User | null> => {
@@ -33,6 +34,20 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       return null;
     }
   }, []);
+
+  const fetchProfileWithRetry = useCallback(async (userId: string, email: string, maxRetries = 5): Promise<User | null> => {
+    for (let i = 0; i < maxRetries; i++) {
+      const profile = await fetchProfile(userId, email);
+      if (profile) {
+        console.log('[AuthProvider] Profile fetched on attempt', i + 1);
+        return profile;
+      }
+      console.log('[AuthProvider] Profile not ready, retrying in', (i + 1) * 500, 'ms...');
+      await new Promise((resolve) => setTimeout(resolve, (i + 1) * 500));
+    }
+    console.log('[AuthProvider] Profile not found after retries');
+    return null;
+  }, [fetchProfile]);
 
   useEffect(() => {
     let mounted = true;
@@ -64,18 +79,24 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     void initAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
-      console.log('[AuthProvider] Auth state changed:', event);
+      console.log('[AuthProvider] Auth state changed:', event, 'isAuthAction:', isAuthActionRef.current);
 
       if (!mounted) return;
 
       setSession(newSession);
 
+      if (isAuthActionRef.current) {
+        console.log('[AuthProvider] Skipping onAuthStateChange profile fetch - active auth action handles it');
+        return;
+      }
+
       if (newSession?.user) {
-        const profile = await fetchProfile(
+        const profile = await fetchProfileWithRetry(
           newSession.user.id,
-          newSession.user.email ?? ''
+          newSession.user.email ?? '',
+          3
         );
-        if (mounted) {
+        if (mounted && !isAuthActionRef.current) {
           setUser(profile);
           setIsLoading(false);
         }
@@ -91,91 +112,91 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [fetchProfile]);
-
-  const fetchProfileWithRetry = useCallback(async (userId: string, email: string, maxRetries = 5): Promise<User | null> => {
-    for (let i = 0; i < maxRetries; i++) {
-      const profile = await fetchProfile(userId, email);
-      if (profile) {
-        console.log('[AuthProvider] Profile fetched on attempt', i + 1);
-        return profile;
-      }
-      console.log('[AuthProvider] Profile not ready, retrying in', (i + 1) * 500, 'ms...');
-      await new Promise((resolve) => setTimeout(resolve, (i + 1) * 500));
-    }
-    console.log('[AuthProvider] Profile not found after retries');
-    return null;
-  }, [fetchProfile]);
+  }, [fetchProfile, fetchProfileWithRetry]);
 
   const signUpWithEmail = useCallback(async (email: string, password: string, username: string) => {
     console.log('[AuthProvider] Signing up with email:', email);
+    isAuthActionRef.current = true;
 
-    const { data: existingProfiles } = await supabase
-      .from('profiles')
-      .select('username')
-      .ilike('username', username.trim());
+    try {
+      const { data: existingProfiles } = await supabase
+        .from('profiles')
+        .select('username')
+        .ilike('username', username.trim());
 
-    if (existingProfiles && existingProfiles.length > 0) {
-      throw new Error('Ce nom d\'utilisateur est déjà pris.');
-    }
+      if (existingProfiles && existingProfiles.length > 0) {
+        throw new Error('Ce nom d\'utilisateur est déjà pris.');
+      }
 
-    const { data, error } = await supabase.auth.signUp({
-      email: email.toLowerCase().trim(),
-      password,
-      options: {
-        data: {
-          username: username.trim(),
-          auth_method: 'email',
+      const { data, error } = await supabase.auth.signUp({
+        email: email.toLowerCase().trim(),
+        password,
+        options: {
+          data: {
+            username: username.trim(),
+            auth_method: 'email',
+          },
         },
-      },
-    });
+      });
 
-    if (error) {
-      console.log('[AuthProvider] Signup error:', error.message);
-      if (error.message.includes('already registered')) {
-        throw new Error('Un compte existe déjà avec cette adresse e-mail.');
+      if (error) {
+        console.log('[AuthProvider] Signup error:', error.message);
+        if (error.message.includes('already registered')) {
+          throw new Error('Un compte existe déjà avec cette adresse e-mail.');
+        }
+        throw new Error(error.message);
       }
-      throw new Error(error.message);
-    }
 
-    if (data.user) {
-      console.log('[AuthProvider] Signup successful, user id:', data.user.id);
-      const profile = await fetchProfileWithRetry(data.user.id, data.user.email ?? email);
-      if (profile) {
-        setUser(profile);
+      if (data.user) {
+        console.log('[AuthProvider] Signup successful, user id:', data.user.id);
+        const profile = await fetchProfileWithRetry(data.user.id, data.user.email ?? email, 8);
+        if (profile) {
+          setUser(profile);
+          console.log('[AuthProvider] Profile set after signup:', profile.username);
+        } else {
+          console.log('[AuthProvider] WARNING: Profile not found after signup retries');
+        }
+        void queryClient.invalidateQueries({ queryKey: ['auth'] });
+        return profile;
       }
-      void queryClient.invalidateQueries({ queryKey: ['auth'] });
-      return profile;
-    }
 
-    return null;
+      return null;
+    } finally {
+      isAuthActionRef.current = false;
+    }
   }, [fetchProfileWithRetry, queryClient]);
 
   const signInWithEmail = useCallback(async (email: string, password: string) => {
     console.log('[AuthProvider] Signing in with email:', email);
+    isAuthActionRef.current = true;
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: email.toLowerCase().trim(),
-      password,
-    });
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.toLowerCase().trim(),
+        password,
+      });
 
-    if (error) {
-      console.log('[AuthProvider] Sign in error:', error.message);
-      throw new Error('Identifiants incorrects. Vérifiez votre e-mail et mot de passe.');
-    }
-
-    if (data.user) {
-      console.log('[AuthProvider] Sign in successful');
-      const profile = await fetchProfile(data.user.id, data.user.email ?? email);
-      if (profile) {
-        setUser(profile);
+      if (error) {
+        console.log('[AuthProvider] Sign in error:', error.message);
+        throw new Error('Identifiants incorrects. Vérifiez votre e-mail et mot de passe.');
       }
-      void queryClient.invalidateQueries({ queryKey: ['auth'] });
-      return profile;
-    }
 
-    return null;
-  }, [fetchProfile, queryClient]);
+      if (data.user) {
+        console.log('[AuthProvider] Sign in successful');
+        const profile = await fetchProfileWithRetry(data.user.id, data.user.email ?? email, 5);
+        if (profile) {
+          setUser(profile);
+          console.log('[AuthProvider] Profile set after login:', profile.username);
+        }
+        void queryClient.invalidateQueries({ queryKey: ['auth'] });
+        return profile;
+      }
+
+      return null;
+    } finally {
+      isAuthActionRef.current = false;
+    }
+  }, [fetchProfileWithRetry, queryClient]);
 
   const signInWithApple = useCallback(async (_username: string) => {
     console.log('[AuthProvider] Apple sign-in requested (placeholder)');
