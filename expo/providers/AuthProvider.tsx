@@ -93,6 +93,20 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     };
   }, [fetchProfile]);
 
+  const fetchProfileWithRetry = useCallback(async (userId: string, email: string, maxRetries = 5): Promise<User | null> => {
+    for (let i = 0; i < maxRetries; i++) {
+      const profile = await fetchProfile(userId, email);
+      if (profile) {
+        console.log('[AuthProvider] Profile fetched on attempt', i + 1);
+        return profile;
+      }
+      console.log('[AuthProvider] Profile not ready, retrying in', (i + 1) * 500, 'ms...');
+      await new Promise((resolve) => setTimeout(resolve, (i + 1) * 500));
+    }
+    console.log('[AuthProvider] Profile not found after retries');
+    return null;
+  }, [fetchProfile]);
+
   const signUpWithEmail = useCallback(async (email: string, password: string, username: string) => {
     console.log('[AuthProvider] Signing up with email:', email);
 
@@ -126,7 +140,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
 
     if (data.user) {
       console.log('[AuthProvider] Signup successful, user id:', data.user.id);
-      const profile = await fetchProfile(data.user.id, data.user.email ?? email);
+      const profile = await fetchProfileWithRetry(data.user.id, data.user.email ?? email);
       if (profile) {
         setUser(profile);
       }
@@ -135,7 +149,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     }
 
     return null;
-  }, [fetchProfile, queryClient]);
+  }, [fetchProfileWithRetry, queryClient]);
 
   const signInWithEmail = useCallback(async (email: string, password: string) => {
     console.log('[AuthProvider] Signing in with email:', email);
