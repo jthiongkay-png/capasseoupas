@@ -10,6 +10,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const isAuthActionRef = useRef<boolean>(false);
+  const pendingProfileRetryRef = useRef<boolean>(false);
   const queryClient = useQueryClient();
 
   const fetchProfile = useCallback(async (userId: string, email: string): Promise<User | null> => {
@@ -90,6 +91,11 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         return;
       }
 
+      if (pendingProfileRetryRef.current) {
+        console.log('[AuthProvider] Pending profile retry detected, will attempt fetch');
+        pendingProfileRetryRef.current = false;
+      }
+
       if (newSession?.user) {
         const profile = await fetchProfileWithRetry(
           newSession.user.id,
@@ -114,9 +120,35 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     };
   }, [fetchProfile, fetchProfileWithRetry]);
 
+  useEffect(() => {
+    if (!session?.user || user || isAuthActionRef.current) return;
+
+    console.log('[AuthProvider] Session exists but no profile loaded, retrying...');
+    let cancelled = false;
+
+    const retryProfile = async () => {
+      const profile = await fetchProfileWithRetry(
+        session.user.id,
+        session.user.email ?? '',
+        5
+      );
+      if (!cancelled && profile) {
+        setUser(profile);
+        console.log('[AuthProvider] Background profile retry succeeded:', profile.username);
+      }
+    };
+
+    void retryProfile();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [session, user, fetchProfileWithRetry]);
+
   const signUpWithEmail = useCallback(async (email: string, password: string, username: string) => {
     console.log('[AuthProvider] Signing up with email:', email);
     isAuthActionRef.current = true;
+    let profileLoaded = false;
 
     try {
       const { data: existingProfiles } = await supabase
@@ -152,6 +184,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         const profile = await fetchProfileWithRetry(data.user.id, data.user.email ?? email, 8);
         if (profile) {
           setUser(profile);
+          profileLoaded = true;
           console.log('[AuthProvider] Profile set after signup:', profile.username);
         } else {
           console.log('[AuthProvider] WARNING: Profile not found after signup retries');
@@ -163,12 +196,16 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       return null;
     } finally {
       isAuthActionRef.current = false;
+      if (!profileLoaded) {
+        pendingProfileRetryRef.current = true;
+      }
     }
   }, [fetchProfileWithRetry, queryClient]);
 
   const signInWithEmail = useCallback(async (email: string, password: string) => {
     console.log('[AuthProvider] Signing in with email:', email);
     isAuthActionRef.current = true;
+    let profileLoaded = false;
 
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -186,6 +223,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         const profile = await fetchProfileWithRetry(data.user.id, data.user.email ?? email, 5);
         if (profile) {
           setUser(profile);
+          profileLoaded = true;
           console.log('[AuthProvider] Profile set after login:', profile.username);
         }
         void queryClient.invalidateQueries({ queryKey: ['auth'] });
@@ -195,6 +233,9 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       return null;
     } finally {
       isAuthActionRef.current = false;
+      if (!profileLoaded) {
+        pendingProfileRetryRef.current = true;
+      }
     }
   }, [fetchProfileWithRetry, queryClient]);
 
@@ -307,7 +348,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
   return useMemo(() => ({
     user,
     session,
-    isAuthenticated: !!user && !!session,
+    isAuthenticated: !!session,
     isLoading,
     signUpWithEmail,
     signInWithEmail,
