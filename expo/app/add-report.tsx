@@ -6,7 +6,6 @@ import { MapPin, CheckCircle, XCircle, X, ChevronDown } from 'lucide-react-nativ
 import * as Haptics from 'expo-haptics';
 import { useThemeColors, ThemeColors } from '@/constants/colors';
 import { usePlaces } from '@/providers/PlacesProvider';
-import { useAuth } from '@/providers/AuthProvider';
 import { PlaceCategory, CATEGORY_LABELS } from '@/types';
 
 interface NominatimResult {
@@ -36,7 +35,6 @@ export default function AddReportScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { addPlace } = usePlaces();
-  const { user } = useAuth();
   const colors = useThemeColors();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
@@ -140,15 +138,14 @@ export default function AddReportScreen() {
       reportsAccepted: accepted ? 1 : 0,
       reportsRefused: accepted ? 0 : 1,
       lastReportDate: new Date().toISOString().split('T')[0],
-      reportedBy: user?.username ?? 'Communauté',
-      reportedByUserId: user?.id,
+      reportedBy: 'Communauté',
     };
 
     addPlace(newPlace);
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     console.log('[AddReport] Place added successfully:', newPlace.name, newPlace.id);
     router.back();
-  }, [name, address, category, accepted, latitude, longitude, addPlace, router, user]);
+  }, [name, address, category, accepted, latitude, longitude, addPlace, router]);
 
   const handleSubmit = useCallback(() => {
     if (!name.trim()) {
