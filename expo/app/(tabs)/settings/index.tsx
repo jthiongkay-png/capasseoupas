@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Linking,
   Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -15,9 +14,7 @@ import {
   ChevronRight,
   FileText,
   Shield,
-  Mail,
   Info,
-  ExternalLink,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 
@@ -90,13 +87,6 @@ export default function SettingsScreen() {
     router.push('/privacy');
   }, [router]);
 
-  const handleContactUs = useCallback(() => {
-    void Linking.openURL('mailto:contact@capasseoupas.app');
-  }, []);
-
-  const handleOpenWebsite = useCallback(() => {
-    void Linking.openURL('https://capasseoupas.app');
-  }, []);
 
   return (
     <View style={styles.container} testID="settings-screen">
@@ -125,27 +115,6 @@ export default function SettingsScreen() {
             onPress={handleOpenPrivacy}
             colors={colors}
             testID="settings-privacy"
-          />
-        </View>
-
-        <Text style={styles.sectionTitle}>Contact</Text>
-        <View style={styles.sectionCard}>
-          <SettingsItem
-            icon={<Mail size={20} color={colors.textSecondary} strokeWidth={1.5} />}
-            label="Nous contacter"
-            sublabel="contact@capasseoupas.app"
-            onPress={handleContactUs}
-            colors={colors}
-            testID="settings-contact"
-          />
-          <View style={styles.separator} />
-          <SettingsItem
-            icon={<ExternalLink size={20} color={colors.textSecondary} strokeWidth={1.5} />}
-            label="Site web"
-            sublabel="capasseoupas.app"
-            onPress={handleOpenWebsite}
-            colors={colors}
-            testID="settings-website"
           />
         </View>
 
