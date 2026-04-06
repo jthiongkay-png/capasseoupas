@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Map, Search } from 'lucide-react-native';
+import { Map, Search, Settings } from 'lucide-react-native';
 import React from 'react';
 import { useThemeColors } from '@/constants/colors';
 
@@ -38,6 +38,13 @@ export default function TabLayout() {
         options={{
           title: 'Explorer',
           tabBarIcon: ({ color, size }) => <Search size={size - 2} color={color} strokeWidth={1.5} />,
+        }}
+      />
+      <Tabs.Screen
+        name="settings"
+        options={{
+          title: 'Réglages',
+          tabBarIcon: ({ color, size }) => <Settings size={size - 2} color={color} strokeWidth={1.5} />,
         }}
       />
     </Tabs>
