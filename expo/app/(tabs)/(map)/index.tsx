@@ -8,6 +8,7 @@ import { useFilteredPlaces, usePlaces } from '@/providers/PlacesProvider';
 import { Place, PlaceCategory, CATEGORY_LABELS } from '@/types';
 import FloatingActionButton from '@/components/FloatingActionButton';
 import PlaceCard from '@/components/PlaceCard';
+import AdBanner, { AD_BANNER_HEIGHT } from '@/components/AdBanner';
 import { useLocation } from '@/providers/LocationProvider';
 
 let NativeMapView: any = null;
@@ -98,6 +99,9 @@ export default function MapScreen() {
   }, [userLocation]);
 
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
+  const [adVisible, setAdVisible] = useState(false);
+
+  const adOffset = adVisible ? AD_BANNER_HEIGHT : 0;
 
   const selectedPlace = useMemo(() => {
     if (!selectedPlaceId) return null;
@@ -285,7 +289,7 @@ export default function MapScreen() {
       </View>
 
       <TouchableOpacity
-        style={[styles.centerButtonWrap, { bottom: selectedPlace ? 280 : 94 }]}
+        style={[styles.centerButtonWrap, { bottom: selectedPlace ? 280 + adOffset : 94 + adOffset }]}
         onPress={handleCenterMap}
         activeOpacity={0.8}
         testID="center-map-button"
@@ -296,12 +300,16 @@ export default function MapScreen() {
       </TouchableOpacity>
 
       {selectedPlace && (
-        <Animated.View style={[styles.selectedCard, { transform: [{ translateY: slideAnim }] }]}>
+        <Animated.View style={[styles.selectedCard, { bottom: 90 + adOffset, transform: [{ translateY: slideAnim }] }]}>
           <PlaceCard place={selectedPlace} onPress={handlePlacePress} compact={false} />
         </Animated.View>
       )}
 
-      <FloatingActionButton onPress={handleAddReport} />
+      <FloatingActionButton onPress={handleAddReport} bottomOffset={adOffset} />
+
+      <View style={styles.adContainer}>
+        <AdBanner onAdLoaded={() => setAdVisible(true)} />
+      </View>
     </View>
   );
 }
@@ -428,9 +436,15 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   selectedCard: {
     position: 'absolute',
-    bottom: 90,
     left: 0,
     right: 0,
+  },
+  adContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
   },
   webHeader: {
     paddingHorizontal: 16,

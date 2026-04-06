@@ -5,9 +5,10 @@ import { useThemeColors, ThemeColors } from '@/constants/colors';
 
 interface FABProps {
   onPress: () => void;
+  bottomOffset?: number;
 }
 
-function FloatingActionButton({ onPress }: FABProps) {
+function FloatingActionButton({ onPress, bottomOffset = 0 }: FABProps) {
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const colors = useThemeColors();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -26,7 +27,7 @@ function FloatingActionButton({ onPress }: FABProps) {
       onPress={onPress}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
-      style={styles.wrapper}
+      style={[styles.wrapper, { bottom: 24 + bottomOffset }]}
       testID="fab-add-report"
     >
       <Animated.View style={[styles.button, { transform: [{ scale: scaleAnim }] }]}>
@@ -43,7 +44,6 @@ export default React.memo(FloatingActionButton);
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   wrapper: {
     position: 'absolute',
-    bottom: 24,
     right: 20,
     zIndex: 100,
   },
