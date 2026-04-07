@@ -2,6 +2,7 @@ import React, { useState, useCallback, useRef, useMemo, useEffect } from 'react'
 import { View, Text, StyleSheet, Platform, TouchableOpacity, Animated, ScrollView, Keyboard } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import MapView, { Marker } from 'react-native-maps';
 import { CheckCircle, XCircle, Locate, MapPin, UtensilsCrossed, Coffee, Wine, ShoppingBag, Hotel, Fuel, ShoppingCart, Gamepad2, Heart, Bus, MoreHorizontal, ListFilter } from 'lucide-react-native';
 import { useThemeColors, ThemeColors } from '@/constants/colors';
 import { useFilteredPlaces, usePlaces } from '@/providers/PlacesProvider';
@@ -11,13 +12,7 @@ import PlaceCard from '@/components/PlaceCard';
 import AdBanner, { AD_BANNER_HEIGHT } from '@/components/AdBanner';
 import { useLocation } from '@/providers/LocationProvider';
 
-let NativeMapView: any = null;
-let NativeMarker: any = null;
-if (Platform.OS !== 'web') {
-  const Maps = require('react-native-maps');
-  NativeMapView = Maps.default;
-  NativeMarker = Maps.Marker;
-}
+
 
 const CATEGORY_ICONS: Record<PlaceCategory, React.ComponentType<{ size: number; color: string; strokeWidth?: number }>> = {
   restaurant: UtensilsCrossed,
@@ -234,54 +229,26 @@ export default function MapScreen() {
     </View>
   ), [styles, filter, allPlaces.length, acceptedCount, refusedCount, colors]);
 
-  if (Platform.OS === 'web') {
-    return (
-      <View style={styles.container}>
-        <View style={[styles.webHeader, { paddingTop: insets.top + 20 }]}>
-          {renderCategoryFilters()}
-          {renderStatusFilters()}
-        </View>
-        <ScrollView style={styles.webList} contentContainerStyle={styles.webListContent}>
-          <View style={styles.webMapNotice}>
-            <MapPin size={18} color={colors.textSecondary} strokeWidth={1.5} />
-            <Text style={styles.webMapNoticeText}>La carte interactive est disponible sur l'application mobile</Text>
-          </View>
-          {filteredPlaces.map((place) => (
-            <PlaceCard key={place.id} place={place} onPress={handlePlacePress} compact={false} />
-          ))}
-          {filteredPlaces.length === 0 && (
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>Aucun lieu trouvé</Text>
-            </View>
-          )}
-        </ScrollView>
-        <FloatingActionButton onPress={handleAddReport} />
-      </View>
-    );
-  }
-
   return (
     <View style={styles.container}>
-      {NativeMapView && (
-        <NativeMapView
-          ref={mapRef}
-          style={styles.map}
-          initialRegion={initialRegion}
-          onPress={handleMapPress}
-          showsUserLocation
-          showsMyLocationButton={false}
-          testID="native-map"
-        >
-          {NativeMarker && filteredPlaces.map((place) => (
-            <NativeMarker
-              key={place.id}
-              coordinate={{ latitude: place.latitude, longitude: place.longitude }}
-              onPress={() => handleMarkerPress(place)}
-              pinColor={place.accepted ? colors.accepted : colors.refused}
-            />
-          ))}
-        </NativeMapView>
-      )}
+      <MapView
+        ref={mapRef}
+        style={styles.map}
+        initialRegion={initialRegion}
+        onPress={handleMapPress}
+        showsUserLocation
+        showsMyLocationButton={false}
+        testID="native-map"
+      >
+        {filteredPlaces.map((place) => (
+          <Marker
+            key={place.id}
+            coordinate={{ latitude: place.latitude, longitude: place.longitude }}
+            onPress={() => handleMarkerPress(place)}
+            pinColor={place.accepted ? colors.accepted : colors.refused}
+          />
+        ))}
+      </MapView>
 
       <View style={[styles.topBar, { paddingTop: insets.top + 20 }]}>
         {renderCategoryFilters()}
