@@ -5,6 +5,7 @@
     "version": "2.0.9",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
+    "sdkVersion": "54.0.0",
     "scheme": "rork-app",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
