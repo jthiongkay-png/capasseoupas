@@ -18,7 +18,7 @@ import {
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 
-const APP_VERSION = '2.0.8';
+const APP_VERSION = '2.0.9';
 
 interface SettingsItemProps {
   icon: React.ReactNode;
