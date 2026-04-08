@@ -229,6 +229,36 @@ export default function MapScreen() {
     </View>
   ), [styles, filter, allPlaces.length, acceptedCount, refusedCount, colors]);
 
+  if (Platform.OS === 'web') {
+    return (
+      <View style={styles.container}>
+        <View style={[styles.webHeader, { paddingTop: insets.top + 12 }]}>
+          {renderCategoryFilters()}
+          {renderStatusFilters()}
+        </View>
+        <View style={styles.webMapNotice}>
+          <MapPin size={16} color={colors.textSecondary} />
+          <Text style={styles.webMapNoticeText}>La carte est disponible sur l'application mobile</Text>
+        </View>
+        <ScrollView style={styles.webList} contentContainerStyle={styles.webListContent}>
+          {filteredPlaces.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>Aucun lieu trouvé</Text>
+            </View>
+          ) : (
+            filteredPlaces.map((place) => (
+              <PlaceCard key={place.id} place={place} onPress={handlePlacePress} compact={false} />
+            ))
+          )}
+        </ScrollView>
+        <FloatingActionButton onPress={handleAddReport} bottomOffset={adOffset} />
+        <View style={styles.adContainer}>
+          <AdBanner onAdLoaded={() => setAdVisible(true)} />
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <MapView
