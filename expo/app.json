@@ -46,12 +46,6 @@
         {
           "userTrackingPermission": "Capasseoupas utilise cet identifiant pour améliorer votre expérience et vous proposer des contenus pertinents."
         }
-      ],
-      [
-        "react-native-google-mobile-ads",
-        {
-          "iosAppId": "ca-app-pub-6551125672569348~6106093593"
-        }
       ]
     ],
     "experiments": {
